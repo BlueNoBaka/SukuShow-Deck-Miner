@@ -60,7 +60,7 @@ def run_game_simulation(
     """
     # NOTE: DBs (MUSIC_DB, DB_CARDDATA, DB_SKILL) are now global to this module
     # and inherited by child processes (copy-on-write).
-    deck_card_data, chart_obj, player_master_level, original_deck_index, deck_card_ids = task_args
+    deck_card_data, chart_obj, player_master_level, original_deck_index, deck_card_ids, centercard_id = task_args
 
     d = Deck(DB_CARDDATA, DB_SKILL, deck_card_data)
     c: Chart = chart_obj
@@ -77,9 +77,7 @@ def run_game_simulation(
                 afk_mental = min(afk_mental, DEATH_NOTE[cid])
             else:
                 afk_mental = DEATH_NOTE[cid]
-        if card.characters_id == c.music.CenterCharacterId:
-            # DR优先C位，无DR则靠左为C位
-            if not centercard or card.card_id[4] == "8":
+        if cid == centercard_id:
                 centercard = card
 
     if centercard:

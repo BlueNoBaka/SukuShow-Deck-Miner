@@ -6,6 +6,7 @@ import json
 
 from platform import python_implementation
 from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 from RChart import Chart
 from DeckGen import generate_decks_with_sequential_priority_pruning
 from DeckGen2 import generate_decks_with_double_cards
@@ -98,9 +99,9 @@ def task_generator_func(decks_generator, chart, player_level):
     一个生成器函数，从 decks_generator 获取每个卡组，
     并将其转换为 run_game_simulation 所需的任务格式。
     """
-    for i, deck_card_ids_list in enumerate(decks_generator):  # Simulate all decks as example
+    for i, (deck_card_ids_list, center_card) in enumerate(decks_generator):  # Simulate all decks as example
         sim_deck_format = convert_deck_to_simulator_format(deck_card_ids_list)
-        yield (sim_deck_format, chart, player_level, i, deck_card_ids_list)
+        yield (sim_deck_format, chart, player_level, i, deck_card_ids_list, center_card)
 
 
 #  --- Main Execution Block for Parallel Simulation ---
@@ -115,16 +116,24 @@ if __name__ == "__main__":
     # 模拟时实际使用的卡牌范围
     card_ids = [
         1011501,  # 沙知
-        1021523, 1021901, 1021512, 1021701, 1021801, 1021802,  # 梢: 银河 BR 舞会 LR PE EA
-        1022701, 1022901,  # 1022521, # 1022504,  # 缀: LR BR 银河 明月
-        1023701, 1023901,  # 1023520,  # 慈: LR BR 银河
-        1031530, 1031533, 1031534,  # 1031519, 1031901, 1031801, 1031802,  # 帆: IDOME 地平 乙女 舞会 BR(2024) PE EA
-        1032518, 1032528, 1032530, 1032901, #1032801, 1032802, # 沙: 舞会 IDOME 地平 BR PE EA
-        1033514, 1033524, 1033525, 1033526, 1033527, 
-        1033528,  # 1033901, #1033801, 1033802, # 乃: 舞会 IDOME COCO夏 喵信号 一生梦 地平 BR PE EA
-        1041513, 1041901, 1041801, 1041802, 1041516,  # 1041517, # 吟: 舞会 BR EA OE 水果 花火
-        1042516, 1042801, 1042802,  # 1042515, # 1042512,  # 铃: 太阳 EA OE 暧昧mayday 舞会
-        1043515, 1043516, 1043902, 1043801, 1043802,  # 芽: BLAST COCO夏 BR EA OE 舞会1043512
+        1021701, 1021523, 1021512,  # 梢: LR 银河 舞会
+        1021901,  # 1021801, 1021802,  # 梢: BR PE EA
+        1022701,  # 1022504, 1022521,  # 缀: LR 明月 银河
+        1022901,  # 1022801, 1022802,  # 缀: BR PE EA
+        1023701, 1023520,  # 慈: LR 银河
+        1023901,  # 1023801, 1023802,  # 慈: BR PE EA
+        1031530, 1031533, 1031519,  # 帆: IDOME 地平 舞会
+        1031901,  # 1031801, 1031802,  #帆: BR(2024) PE EA
+        1032518, 1032528, 1032530,  # 沙: 舞会 IDOME 地平
+        1032901, 1032801, 1032802,  # 沙: BR PE EA
+        1033514, 1033524, 1033525,  # 乃: 舞会 IDOME COCO夏
+        1033526, 1033528,  # 乃: 喵信号 地平
+        1033901, 1033803,  # 1033801, 1033802,  # 乃: BR(2024) OE PE EA
+        1041513,  # 1041512, 1041516, 1041517,  # 吟: 舞会 梦烦 水果 花火
+        1041901, 1041801, 1041802,  # 吟: BR EA OE
+        1042516,  # 1042801, 1042802,  # 铃: 太阳 EA OE
+        1043515, 1043516,  # 芽: BLAST COCO夏
+        # 1043902, 1043801, 1043802,  # 芽: BR(2025) EA OE
         1051506, 1051503,  # 1051501, 1051502,  # 泉: 片翼 天地黎明 DB RF
         1052506, 1052901, 1052503,  # 1052801, # 1052504  # 塞: 片翼 BR 十六夜 OE 天地黎明
     ]
@@ -135,9 +144,14 @@ if __name__ == "__main__":
     mustcards_all = []
     # 卡组必须包含至少一张以下卡牌
     mustcards_any = []
+    # 将以下卡牌移出备选池
+    exclude = []
+    # 卡组包含DR或LR时，仍可以作为C位的非DR/LR卡牌
+    secondary_center = [1031534, 1032530, 1033528]
+    # 若备选池中无DR，并且未指定其他卡牌作为C位卡牌，则会模拟所有可能的C位
     # 以上填写格式均为: [卡牌id1, 卡牌id2, ...]
-    
-    # 卡组必须包含以下所有技能类型 
+
+    # 卡组必须包含以下所有技能类型
     mustskills_all = [
         SkillEffectType.DeckReset,  # 洗牌
         SkillEffectType.ScoreGain,  # 分
@@ -150,8 +164,8 @@ if __name__ == "__main__":
     ]
 
     # --- Step 2: Prepare simulation tasks ---
-    fixed_music_id = "405116"  # 一生に夢が咲くように
-    fixed_difficulty = "02"
+    fixed_music_id = "405118"  # 乙女詞華集
+    fixed_difficulty = "01"
     fixed_player_master_level = 50
 
     # 强制指定歌曲C位和颜色
@@ -184,30 +198,39 @@ if __name__ == "__main__":
     # BONUS_SFL = (len(pre_initialized_chart.music.SingerCharacterId) + 1) * 0.7 + 1
     CENTERCHAR = str(pre_initialized_chart.music.CenterCharacterId)
 
-    # 预处理卡池，移除非C位角色DR
-    temp = list()
-    force_dr = False
+    # 移除除外池，并筛选C位角色的DR、LR
+    card_ids = list(set(card_ids) - set(exclude))
+    primary_center = set()
+    other_center = set()
     for card in card_ids:
         card_str = str(card)
-        if card_str[4] != "8":
-            temp.append(card)
-        elif card_str[0:4] == CENTERCHAR:
-            temp.append(card)
-            force_dr = True
-    if force_dr:
-        card_ids = temp
-        logger.info(f"DR of Non-Center Characters removed, remaining {len(card_ids)} cards.")
-        logger.info("DR of Center Character detected, all decks will contain 1 DR card.")
+        if card_str[0:4] == CENTERCHAR:
+            if card_str[4] in ["7", "8"]:
+                primary_center.add(card)
+            else:
+                other_center.add(card)
 
-    logger.info("Pre-calculating deck amount...")
+    # 添加备用C位池中的可用卡牌
+    center_char_id = pre_initialized_chart.music.CenterCharacterId
+    for card in secondary_center:
+        if card // 1000 == center_char_id and card in card_ids:
+            primary_center.add(card)
+
+    available_center = primary_center or other_center or set()
+    if available_center:
+        logger.info(f"Available center ({len(available_center)}): {available_center}")
+    else:
+        logger.info(f"Missing available center card")
+
+    logger.info(f"Pre-calculating deck amount from {len(card_ids)} cards...")
 
     # 3. 获取卡组生成器
     decks_generator = generate_decks_with_double_cards(
         cardpool=card_ids,
         mustcards=[mustcards_all, mustcards_any, mustskills_all],
-        center_char=pre_initialized_chart.music.CenterCharacterId,
-        force_dr=force_dr,
-        log_path=os.path.join("log", f"simulation_results_{fixed_music_id}_{fixed_difficulty}.json")
+        center_char=center_char_id,  # 未指定center_char时会生成不含C位角色的卡组
+        center_card=available_center,
+        log_path=os.path.join("log", f"simulation_results_{fixed_music_id}_{fixed_difficulty}.json"),
     )
     total_decks_to_simulate = decks_generator.total_decks
     logger.info(f"{total_decks_to_simulate} decks to be simulated.")
@@ -224,8 +247,8 @@ if __name__ == "__main__":
     # Use multiprocessing.Pool with imap_unordered
     num_processes = os.cpu_count() or 1
     logger.info(f"Starting parallel simulations using {num_processes} processes...")
-    highest_score_overall = -1
-    highest_score_deck_info = None  # 存储最佳卡组的完整信息
+    best_score = -1
+    best_deck_info = None  # 存储最佳卡组的完整信息
     best_log = []
 
     current_batch_results = []  # 存储当前批次的结果
@@ -240,39 +263,41 @@ if __name__ == "__main__":
         else:
             chunksize = 500
         results_iterator = pool.imap_unordered(run_game_simulation, simulation_tasks_generator, chunksize)
+        with logging_redirect_tqdm():
+            for result in tqdm(results_iterator, total=total_decks_to_simulate):
+                current_score = result['final_score']
+                original_index = result['original_deck_index']
+                current_log = result["cards_played_log"]
+                deck_card_ids = result['deck_card_ids']
+                center_card = result['center_card']
 
-        for result in tqdm(results_iterator, total=total_decks_to_simulate):
-            current_score = result['final_score']
-            original_index = result['original_deck_index']
-            current_log = result["cards_played_log"]
-            deck_card_ids = result['deck_card_ids']
-            center_card = result['center_card']
+                # 记录当前卡组的得分、卡牌、C位卡牌，添加到结果列表中
+                current_batch_results.append({
+                    "deck_card_ids": deck_card_ids,  # 使用卡牌ID列表
+                    "center_card": center_card,
+                    "score": current_score,
+                })
+                results_processed_count += 1
 
-            # 记录当前卡组的得分、卡牌、C位卡牌，添加到结果列表中
-            current_batch_results.append({
-                "deck_card_ids": deck_card_ids,  # 使用卡牌ID列表
-                "center_card": center_card,
-                "score": current_score,
-            })
-            results_processed_count += 1
+                if current_score > best_score:
+                    best_score = current_score
+                    best_deck_info = {
+                        "original_index": original_index,
+                        "deck_card_ids": deck_card_ids,
+                        "center_card": center_card,
+                        "score": current_score
+                    }
+                    best_log = current_log
+                    logger.info(f"NEW HI-SCORE! Deck: {original_index}, Score: {current_score:,}")
+                    logger.info(f"  Cards: {deck_card_ids}")
+                    logger.info(f"  Center: {center_card}")
 
-            if current_score > highest_score_overall:
-                highest_score_overall = current_score
-                highest_score_deck_info = {
-                    "original_index": original_index,
-                    "deck_card_ids": deck_card_ids,
-                    "score": current_score
-                }
-                best_log = current_log
-                logger.info(f"\nNEW HI-SCORE! Deck: {original_index}, Score: {current_score:,}")
-                logger.info(f"  Deck: {deck_card_ids}")
-
-            if len(current_batch_results) >= BATCH_SIZE:
-                batch_counter += 1
-                temp_filename = os.path.join(TEMP_OUTPUT_DIR, f"temp_batch_{batch_counter:0>3}.json")
-                save_simulation_results(current_batch_results, temp_filename)
-                temp_files.append(temp_filename)
-                current_batch_results = []  # 清空当前批次列表
+                if len(current_batch_results) >= BATCH_SIZE:
+                    batch_counter += 1
+                    temp_filename = os.path.join(TEMP_OUTPUT_DIR, f"temp_batch_{batch_counter:0>3}.json")
+                    save_simulation_results(current_batch_results, temp_filename)
+                    temp_files.append(temp_filename)
+                    current_batch_results = []  # 清空当前批次列表
 
         # --- 处理最后一批可能不满BATCH_SIZE的结果 ---
         if current_batch_results:
@@ -299,10 +324,14 @@ if __name__ == "__main__":
     logger.info(f"\n--- Final Simulation Summary ---")
     logger.info(f"Map: {MUSIC_DB.get_music_by_id(fixed_music_id).Title} ({fixed_difficulty})")
     logger.info(f"Total simulations run: {total_decks_to_simulate}")
-    if highest_score_overall != -1:
-        logger.info(f"Overall Highest Score: {highest_score_overall:,}")
-        logger.info(f"Highest Score Deck: {highest_score_deck_info['original_index']}")
-        logger.info(f"Cards: {highest_score_deck_info['deck_card_ids']}")
-        logger.info(f"Log: {best_log}")
+    if best_score != -1:
+        logger.info(f"Best Score: {best_score:,}")
+        logger.info(f"Best Deck: {best_deck_info['original_index']}\t Center: {best_deck_info['center_card']}")
+        logger.info(f"Cards: {best_deck_info['deck_card_ids']}")
+        best_log_str = [" | ".join(best_log[i:i + 3])
+                        for i in range(0, len(best_log), 3)]
+        best_log_str = '\n'.join(best_log_str)
+        logger.info(f"Log ({len(best_log)}):")
+        logger.info(best_log_str)
     else:
         logger.info("No simulations yielded a score.")

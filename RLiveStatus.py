@@ -203,7 +203,7 @@ class PlayerAttributes:
             f"  AP: {self.ap:.5f}  Combo: {self.combo}\t"
             f"AP Gain Rate: {self.ap_rate:.2f}x\t"
             f"{self.mental}\n"
-            f"  Score: {self.score}\t"
+            f"  Score: {self.score:,}\t"
             f"{self.voltage}\t"
             f"分加成: {self.next_score_gain_rate}\t"
             f"电加成: {self.next_voltage_gain_rate}\t"
@@ -217,7 +217,7 @@ class PlayerAttributes:
             f"  AP Gain Rate: {self.ap_rate:.2f}x\n"
             f"  Voltage Gain Rate: {self.voltage_gain_rate:.2f}%\n"
             f"  {self.mental}\n"
-            f"  Score: {self.score}\n"
+            f"  Score: {self.score:,}\n"
             f"  {self.voltage}\n"
             f"  Next Score Gain Rate: {self.next_score_gain_rate}\n"
             f"  Next Voltage Gain Rate: {self.next_voltage_gain_rate}\n"
@@ -279,5 +279,5 @@ class PlayerAttributes:
 
 
 if __name__ == "__main__":
-    print(Voltage._points_needed_for_level(247))
-    print(Voltage._points_needed_for_level(248))
+    print(Voltage._points_needed_for_level(7))
+    print(Voltage._points_needed_for_level(8))

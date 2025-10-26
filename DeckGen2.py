@@ -104,11 +104,11 @@ def load_simulated_decks(path: str):
 
 
 class DeckGeneratorWithDoubleCards:
-    def __init__(self, cardpool: list[int], mustcards: list[list[int]], center_char=None, force_dr=False, log_path: str = None):
+    def __init__(self, cardpool: list[int], mustcards: list[list[int]], center_char=None, center_card: set[int] = None, log_path: str = None):
         self.cardpool = cardpool
         self.center_char = center_char
         self.char_id_to_cards = defaultdict(list)
-        self.force_dr = force_dr
+        self.center_card = center_card
         self.mustcards = mustcards
         self.simulated_decks = load_simulated_decks(log_path)
         for card_id in self.cardpool:
@@ -127,17 +127,14 @@ class DeckGeneratorWithDoubleCards:
                 continue
             yield from self._generate_decks_for_distribution(char_distribution)
 
-    def check_skill_tags(self, tag_counts: Counter, force_dr=False):
+    def check_skill_tags(self, tag_counts: Counter):
         """
         检查卡组中的技能类型是否符合给定条件。
         默认检查洗牌、分、电、分加成、电加成均不为0，且DR数量<=1。
         """
         if all(tag_counts[skill] for skill in self.mustcards[2]) and \
                 tag_counts[Rarity.DR] <= 1:
-            if not force_dr:
-                return True
-            elif tag_counts[Rarity.DR] == 1:
-                return True
+            return True
         return False
 
     def _generate_decks_for_distribution(self, char_distribution):
@@ -166,13 +163,23 @@ class DeckGeneratorWithDoubleCards:
                     continue
             if has_card_conflict(set(deck)):
                 continue
-            if self.check_skill_tags(count_skill_tags(deck), self.force_dr):
+            if self.check_skill_tags(count_skill_tags(deck)):
+                if self.center_card:
+                    # 只生成包含指定C位角色卡牌的卡组
+                    available_center = self.center_card.intersection(deck)
+                    if not available_center:
+                        continue
+                else:
+                    # 仅在未指定C位角色卡牌时生成不含C位角色的卡组
+                    available_center = {None}
+
                 for perm in itertools.permutations(deck):
-                    # 去除分位于左一、洗牌位于最后一张的卡组
+                # 去除分位于左一、洗牌位于最后一张的卡组
                     if SkillEffectType.ScoreGain in DB_TAG[perm[0]] or \
                             SkillEffectType.DeckReset in DB_TAG[perm[-1]]:
                         continue
-                    yield perm
+                    for center in available_center:
+                        yield perm, center
 
     def _count_decks_for_distribution(self, char_distribution):
         char_counts = {char_id: char_distribution.count(char_id) for char_id in set(char_distribution)}
@@ -201,12 +208,14 @@ class DeckGeneratorWithDoubleCards:
                     continue
             if has_card_conflict(set(deck)):
                 continue
-            if self.check_skill_tags(count_skill_tags(deck), self.force_dr):
-                for perm in itertools.permutations(deck):
-                    if SkillEffectType.ScoreGain in DB_TAG[perm[0]] or \
-                            SkillEffectType.DeckReset in DB_TAG[perm[-1]]:
-                        continue
-                    total += 1
+            if self.check_skill_tags(count_skill_tags(deck)):
+                available_center = self.center_card.intersection(deck)
+                if available_center or not self.center_card:
+                    for perm in itertools.permutations(deck):
+                        if SkillEffectType.ScoreGain in DB_TAG[perm[0]] or \
+                                SkillEffectType.DeckReset in DB_TAG[perm[-1]]:
+                            continue
+                        total += len(available_center) or 1
         return total
 
     def compute_total_count(self):
@@ -220,11 +229,11 @@ class DeckGeneratorWithDoubleCards:
         return total
 
 
-def generate_decks_with_double_cards(cardpool: list[int], mustcards: list[list[int]], center_char: int = None, force_dr: bool = False, log_path: str = None):
+def generate_decks_with_double_cards(cardpool: list[int], mustcards: list[list[int]], center_char: int = None, center_card: set[int] = None, log_path: str = None):
     """
     外部接口函数，返回支持双卡规则的卡组生成器
     """
-    return DeckGeneratorWithDoubleCards(cardpool, mustcards, center_char, force_dr, log_path)
+    return DeckGeneratorWithDoubleCards(cardpool, mustcards, center_char, center_card, log_path)
 
 
 if __name__ == "__main__":

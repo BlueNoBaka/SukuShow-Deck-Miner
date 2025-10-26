@@ -21,8 +21,18 @@ def timing(self, message, *args, **kws):
 
 logging.Logger.timing = timing
 
+"""
+可选日志等级: INFO / DEBUG / TIMING
+INFO: 仅输出卡组与模拟结果
+DEBUG: 输出详细的技能使用记录
+TIMING: 输出包括所有Note与CD结束时间点的日志
+
+终端无法显示完整日志时，可将日志输出至文本文件
+将下面 logging.basicConfig 中的 filename=... 和 encoding=... 取消注释即可
+"""
 logging.basicConfig(
     level=logging.INFO,
+    # 修改日志等级 ↑
     format='%(message)s',
     # filename=f"log\log_{int(time.time())}.txt",
     # encoding="utf-8"
@@ -56,19 +66,22 @@ if __name__ == "__main__":
     d = Deck(
         db_carddata, db_skill,
         convert_deck_to_simulator_format(
-            [1033901, 1021901, 1021802, 1032528, 1031530, 1051503]
+            [1033528, 1041513, 1021701, 1032530, 1033801, 1031533]
         )
     )
+    centercard_id = []
+    # 指定一张C位卡牌，未指定则按默认规则选取
+    # 默认规则: 右侧DR > 左侧DR > 左侧非DR
 
     # 歌曲、难度设置
     # 难度 01 / 02 / 03 / 04 对应 Normal / Hard / Expert / Master
-    fixed_music_id = "405301"  # Edelied
+    fixed_music_id = "405118"  # バイタルサイン
     fixed_difficulty = "02"
     fixed_player_master_level = 50
 
     # 强制替换歌曲C位和颜色
     center_override = None  # 1052 #1032
-    color_override = None  # 1 # 1=Smile 2=Pure 3=Cool
+    color_override = None  # 1=Smile 2=Pure 3=Cool
 
     c = Chart(musicdb, fixed_music_id, fixed_difficulty)
     player = PlayerAttributes(fixed_player_master_level)
@@ -97,8 +110,11 @@ if __name__ == "__main__":
         if cid == 1041517:
             flag_hanabi_ginko = True
         if card.characters_id == c.music.CenterCharacterId:
-            # DR优先C位，无DR则靠左为C位
-            if not centercard or card.card_id[4] == "8":
+            if centercard_id:
+                if cid == centercard_id[0]:
+                    centercard = card
+            elif not centercard or card.card_id[4] == "8":
+                # 未指定C位卡牌时，靠右DR优先C位，无DR则靠左为C位
                 centercard = card
     if centercard:
         for target, effect in centercard.get_center_attribute():
@@ -153,7 +169,7 @@ if __name__ == "__main__":
                         c.ChartEvents.sort(key=lambda event: float(event[0]))
                     else:
                         player.combo_add("MISS", event)
-                        logger.timing(f"[连击{player.combo}x]\t总分: {player.score}\t时间: {timestamp}\t{event}")
+                        logger.timing(f"[连击{player.combo}x]\t总分: {player.score}\t时间: {timestamp}\t{event}\t{player.mental}")
                 elif combo_count in []:
                     player.combo_add("GREAT")
                     # 连击计数、AP速度更新、回复AP、扣血
@@ -191,7 +207,7 @@ if __name__ == "__main__":
             case event if event[0] == "_":
                 if player.mental.get_rate() > afk_mental:
                     player.combo_add("MISS", event[1:])
-                    logger.timing(f"[连击{player.combo}x]\t总分: {player.score}\t时间: {timestamp}\tMISS: {event[1:]}")
+                    logger.timing(f"[连击{player.combo}x]\t总分: {player.score}\t时间: {timestamp}\tMISS: {event[1:]}\t{player.mental}")
                 else:
                     player.combo_add("PERFECT")
                     logger.timing(f"[连击{player.combo}x]\t总分: {player.score}\t时间: {timestamp}\t{event[1:]} (延后)")
@@ -216,5 +232,9 @@ if __name__ == "__main__":
 
     logging.debug("\n--- 模拟结束 ---")
     logging.info(player)
-    logging.info(f"打出记录: {d.card_log}")
-    logging.info(f"打出次数: {len(d.card_log)}")
+    card_log = d.card_log
+    card_log_str = [" | ".join(card_log[i:i + 3])
+                    for i in range(0, len(card_log), 3)]
+    card_log_str = '\n'.join(card_log_str)
+    logging.info(f"打出记录 ({len(card_log)}):")
+    logging.info(f"{card_log_str}")
