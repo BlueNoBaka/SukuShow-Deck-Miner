@@ -117,23 +117,23 @@ if __name__ == "__main__":
     card_ids = [
         1011501,  # 沙知
         1021701, 1021523, 1021512,  # 梢: LR 银河 舞会
-        1021901,  # 1021801, 1021802,  # 梢: BR PE EA
+        1021901, 1021801, 1021802,  # 梢: BR PE EA
         1022701,  # 1022504, 1022521,  # 缀: LR 明月 银河
         1022901,  # 1022801, 1022802,  # 缀: BR PE EA
-        1023701, 1023520,  # 慈: LR 银河
+        # 1023701, 1023520,  # 慈: LR 银河
         1023901,  # 1023801, 1023802,  # 慈: BR PE EA
-        1031530, 1031533, 1031519,  # 帆: IDOME 地平 舞会
+        1031530, 1031533,  # 1031519,  # 帆: IDOME 地平 舞会
         1031901,  # 1031801, 1031802,  #帆: BR(2024) PE EA
         1032518, 1032528, 1032530,  # 沙: 舞会 IDOME 地平
         1032901, 1032801, 1032802,  # 沙: BR PE EA
         1033514, 1033524, 1033525,  # 乃: 舞会 IDOME COCO夏
-        1033526, 1033528,  # 乃: 喵信号 地平
-        1033901, 1033803,  # 1033801, 1033802,  # 乃: BR(2024) OE PE EA
-        1041513,  # 1041512, 1041516, 1041517,  # 吟: 舞会 梦烦 水果 花火
+        # 1033526, 1033528,  # 乃: 喵信号 地平
+        1033901, 1033803, 1033801, 1033802,  # 乃: BR(2024) OE PE EA
+        1041513, 1041512, 1041516,  # 1041517,  # 吟: 舞会 梦烦 水果 花火
         1041901, 1041801, 1041802,  # 吟: BR EA OE
         1042516,  # 1042801, 1042802,  # 铃: 太阳 EA OE
         1043515, 1043516,  # 芽: BLAST COCO夏
-        # 1043902, 1043801, 1043802,  # 芽: BR(2025) EA OE
+        1043902,  # 1043801, 1043802,  # 芽: BR(2025) EA OE
         1051506, 1051503,  # 1051501, 1051502,  # 泉: 片翼 天地黎明 DB RF
         1052506, 1052901, 1052503,  # 1052801, # 1052504  # 塞: 片翼 BR 十六夜 OE 天地黎明
     ]
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     # 将以下卡牌移出备选池
     exclude = []
     # 卡组包含DR或LR时，仍可以作为C位的非DR/LR卡牌
-    secondary_center = [1031534, 1032530, 1033528]
+    secondary_center = [1031533, 1032530, 1033528]
     # 若备选池中无DR，并且未指定其他卡牌作为C位卡牌，则会模拟所有可能的C位
     # 以上填写格式均为: [卡牌id1, 卡牌id2, ...]
 
@@ -164,8 +164,8 @@ if __name__ == "__main__":
     ]
 
     # --- Step 2: Prepare simulation tasks ---
-    fixed_music_id = "405118"  # 乙女詞華集
-    fixed_difficulty = "01"
+    fixed_music_id = "405105"  # 乙女詞華集
+    fixed_difficulty = "02"
     fixed_player_master_level = 50
 
     # 强制指定歌曲C位和颜色
@@ -181,10 +181,6 @@ if __name__ == "__main__":
         pre_initialized_chart = Chart(MUSIC_DB, fixed_music_id, fixed_difficulty)
         pre_initialized_chart.ChartEvents = [(float(t), e) for t, e in pre_initialized_chart.ChartEvents]
         # pre_initialized_chart.ChartEvents = [(int(float(t) * 1_000_000) , e) for t, e in pre_initialized_chart.ChartEvents]
-
-        if pypy_impl:
-            from sortedcontainers import SortedList
-            pre_initialized_chart.ChartEvents = SortedList(pre_initialized_chart.ChartEvents)
 
         if center_override:
             pre_initialized_chart.music.CenterCharacterId = center_override
