@@ -27,11 +27,11 @@ class Voltage:
     """
 
     def __init__(self, initial_points: int = 0):
-        if not isinstance(initial_points, int) or initial_points < 0:
-            raise ValueError("初始 VoltagePt 必须是非负整数。")
-
         self._current_points = 0  # 内部存储实际点数
         self._current_level = 0  # 内部存储当前等级
+        self.level = 0  # 显示等级
+        self.bonus = 1.0  # 等级对应的分加成
+        self.fever = False
 
         # 设置初始点数并计算初始等级
         self.set_points(initial_points)
@@ -54,7 +54,7 @@ class Voltage:
         根据当前点数和上次的等级，高效地更新 Voltage 等级。
         这个方法在点数被 `add_points` 或 `set_points` 修改后调用。
         """
-        old_level = self._current_level
+        old_level = self.level
 
         # 优化：从当前等级开始向上或向下检查
 
@@ -69,9 +69,14 @@ class Voltage:
         while self._current_points < Voltage._points_needed_for_level(self._current_level) and self._current_level > 0:
             self._current_level -= 1
 
+        self.level = self._current_level
+        if self.fever:
+            self.level *= 2
+        self.bonus = (self.level + 10) / 10
+
         if logger.isEnabledFor(logging.DEBUG):
-            if old_level != self._current_level:
-                logger.debug(f"  Voltage等级变化: 从 Lv.{old_level} -> Lv.{self._current_level}")
+            if old_level != self.level:
+                logger.debug(f"  Voltage等级变化: 从 Lv.{old_level} -> Lv.{self.level}")
 
     def add_points(self, amount: int):
         """
@@ -106,21 +111,24 @@ class Voltage:
         """
         return self._current_points
 
-    def get_level(self) -> int:
+    def set_fever(self, value: bool):
         """
-        获取当前的 Voltage 等级。
+        设置 Fever 状态，并更新显示等级。
         """
-        return self._current_level
+        self.fever = value
+        self._update_level()
 
     def __str__(self):
         """
         Voltage 对象的字符串表示。
         """
-        return f"Voltage: {self._current_points} Pt (Lv.{self._current_level})"
+        return f"Voltage: {self._current_points} Pt (Lv.{self.level})"
+
 
 class MentalDown(Exception):
     def __init__(self):
         pass
+
 
 class Mental:
     def __init__(self) -> None:
@@ -138,24 +146,19 @@ class Mental:
         self.traceMinus += int(self.max_hp * 0.02)
 
     def sub(self, value, note_type=None):
-        if type(value) is int:
-            # 输入要扣除的血量百分比
-            self.current_hp = max(0, self.current_hp - ceil(self.max_hp * value / 100))
-        elif type(value) is str:
-            # 输入判定
-            match value:
-                case "MISS":
-                    if note_type in ["Trace", "HoldMid"]:
-                        self.current_hp = max(0, self.current_hp - self.traceMinus)
-                    else:
-                        self.current_hp = max(0, self.current_hp - self.missMinus)
-                case "BAD":
-                    self.current_hp = max(0, self.current_hp - self.badMinus)
-                case _:
-                    pass
-            if self.current_hp:
-                return
-            raise MentalDown()
+        match value:
+            case "MISS":
+                if note_type in ["Trace", "HoldMid"]:
+                    self.current_hp = max(0, self.current_hp - self.traceMinus)
+                else:
+                    self.current_hp = max(0, self.current_hp - self.missMinus)
+            case "BAD":
+                self.current_hp = max(0, self.current_hp - self.badMinus)
+            case _:
+                pass
+        if self.current_hp:
+            return
+        raise MentalDown()
 
     def skill_add(self, value):
         self.current_hp = max(1, self.current_hp + ceil(self.max_hp * value / 100))
@@ -187,10 +190,8 @@ class PlayerAttributes:
         self.voltage = Voltage(0)
         self.next_score_gain_rate = []
         self.next_voltage_gain_rate = []
-        self.fevertime = False
         self.CDavailable = False
         self.deck: Deck
-        self.appeal: int = 0
         self.masterlv: int = masterlv
         self.base_score: float
         self.note_score: dict = dict()
@@ -225,7 +226,7 @@ class PlayerAttributes:
 
     def set_deck(self, deck: Deck):
         self.deck = deck
-    
+
     def hp_calc(self):
         self.mental.set_hp(self.deck.mental_calc())
 
@@ -243,10 +244,7 @@ class PlayerAttributes:
         self.full_ap_plus = 600000 / all_note_size
 
     def score_add(self, value, skill=True):
-        voltage_lv = self.voltage.get_level()
-        if self.fevertime:
-            voltage_lv *= 2
-        voltage_bonus = (voltage_lv + 10) / 10
+        voltage_bonus = self.voltage.bonus
         value *= voltage_bonus
         if skill:
             value *= self.base_score

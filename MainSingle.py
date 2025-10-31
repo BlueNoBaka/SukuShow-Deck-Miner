@@ -66,7 +66,7 @@ if __name__ == "__main__":
     d = Deck(
         db_carddata, db_skill,
         convert_deck_to_simulator_format(
-            [1033528, 1041513, 1021701, 1032530, 1033801, 1031533]
+            [1041513, 1021701, 1021523, 1022701, 1043516, 1043802]
         )
     )
     centercard_id = []
@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     # 歌曲、难度设置
     # 难度 01 / 02 / 03 / 04 对应 Normal / Hard / Expert / Master
-    fixed_music_id = "405118"  # バイタルサイン
+    fixed_music_id = "405105"  # Very! Very! COCO夏っ
     fixed_difficulty = "02"
     fixed_player_master_level = 50
 
@@ -214,7 +214,7 @@ if __name__ == "__main__":
 
             case "LiveStart" | "LiveEnd" | "FeverStart":
                 if event == "FeverStart":
-                    player.fevertime = True
+                    player.voltage.set_fever(True)
                     logging.debug(f"\n【FEVER开始】\t时间: {timestamp}")
                 if centercard != None:
                     logger.debug(f"\n尝试应用C位技能: {centercard.full_name}")
@@ -225,7 +225,7 @@ if __name__ == "__main__":
                     break
 
             case "FeverEnd":
-                player.fevertime = False
+                player.voltage.set_fever(False)
                 logging.debug(f"\n【FEVER结束】\t时间: {timestamp}")
             case _:
                 logging.warning(f"未定义的事件: {event}\t时间: {timestamp}")

@@ -327,15 +327,13 @@ def CheckSkillCondition(player_attrs: PlayerAttributes, condition_id: str, card:
 
     match condition_type:
         case SkillConditionType.FeverTime:
-            is_satisfied = player_attrs.fevertime
+            is_satisfied = player_attrs.voltage.fever
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(f"  条件: Fever 中 -> {'满足' if is_satisfied else '不满足'}")
 
         case SkillConditionType.VoltageLevel:
             # 获取 Voltage 对象的当前等级进行比较
-            current_level = player_attrs.voltage.get_level()
-            if player_attrs.fevertime:
-                current_level *= 2
+            current_level = player_attrs.voltage.level
 
             if operator_or_flag == SkillComparisonOperator.ABOVE_OR_EQUAL:  # >=
                 is_satisfied = (current_level >= condition_value)
@@ -623,14 +621,12 @@ def CheckCenterSkillCondition(player_attrs: PlayerAttributes, condition_id: str,
                     logger.debug(f"  条件: Fever开始时 -> {'满足' if is_satisfied else '不满足'}")
 
             case CenterSkillConditionType.FeverTime:
-                is_satisfied = player_attrs.fevertime
+                is_satisfied = player_attrs.voltage.fever
                 if logger.isEnabledFor(logging.DEBUG):
                     logger.debug(f"  条件: Fever Time 中 -> {'满足' if is_satisfied else '不满足'}")
 
             case CenterSkillConditionType.VoltageLevel:
-                current_level = player_attrs.voltage.get_level()
-                if player_attrs.fevertime:
-                    current_level *= 2
+                current_level = player_attrs.voltage.level
 
                 if operator_or_flag == SkillComparisonOperator.ABOVE_OR_EQUAL:  # >=
                     is_satisfied = (current_level >= condition_value)
