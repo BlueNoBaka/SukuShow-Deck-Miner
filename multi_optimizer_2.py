@@ -18,16 +18,16 @@ logging.basicConfig(
 # 求解前需运行 MainBatch.py 生成对应的卡组得分记录
 CHALLENGE_SONGS = [
     # 若只输入两首歌则会寻找仅针对两面的最优解，不考虑第三面
-    ("405305", "02"),  # 僕らは今のなかで
-    ("405117", "02"),  # 乙女詞華集
-    ("405118", "02"),  # バイタルサイン
+    ("405119", "02"),  # はじまりの羽音
+    ("405121", "02"),  # 平成ギャルズ
+    ("405107", "02"),  # diamondz
 ]
 
 # 每首歌只保留得分排名前 N 名的卡组用于求解
-TOP_N = 5000
+TOP_N = 50000
 
 # 在控制台与文件输出中显示卡牌名称
-SHOWNAME = False
+SHOWNAME = True
 
 
 def get_song_title() -> dict:
@@ -102,7 +102,7 @@ if __name__ == "__main__":
         i_min = min(range(3), key=lambda i: best[i])
         i_mid = 3 - i_max - i_min
         sorted_indices = [i_max, i_min, i_mid]
-        # 重排 level_files 和 levels_raw
+        # 重排 CHALLENGE_SONGS 和 levels_raw
         CHALLENGE_SONGS = [CHALLENGE_SONGS[i] for i in sorted_indices]
         levels_raw = [levels_raw[i] for i in sorted_indices]
         logger.info(f"Challenge songs reordered for optimization: {CHALLENGE_SONGS}")
@@ -171,8 +171,10 @@ if __name__ == "__main__":
                 if total_pt > best_pt:
                     best_pt = total_pt
                     best_combo = (deck1, deck2, deck3)
-                    logger.info(f"New best total pt found: {best_pt}")
+                    logger.info(f"New best total pt found: {best_pt:,}")
                     for i, d in enumerate(best_combo):
+                        if i >= len(CHALLENGE_SONGS):
+                            break
                         logger.info(f"  Song {i+1} {CHALLENGE_SONGS[i]}: ")
                         logger.info(f"    Pt: {d['pt']:,}\tScore: {d['score']:,}\tRank: {d['rank']}")
                         logger.info(f"    Deck (ID): {d['deck']}")
@@ -196,8 +198,8 @@ if __name__ == "__main__":
             output.append(f"    Pt: {d['pt']:18,}\tRank: {d['rank']}")
             output.append(f"    Deck (ID): {d['deck']}")
             if SHOWNAME:
-                output.append(f"    {[cardname[cid] for cid in d['deck'][:3]]}")
-                output.append(f"    {[cardname[cid] for cid in d['deck'][3:]]}")
+                output.append(f"    {[cardname.get(cid, '？？？') for cid in d['deck'][:3]]}")
+                output.append(f"    {[cardname.get(cid, '？？？') for cid in d['deck'][3:]]}")
     output = "\n".join(output)
     logger.info(f"{output}")
     with open("best_3_song_combo.txt", "w", encoding="utf-8") as f:

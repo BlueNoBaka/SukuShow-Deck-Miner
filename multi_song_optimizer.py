@@ -20,9 +20,9 @@ logging.basicConfig(
 # 求解前需运行 MainBatch.py 生成对应的卡组得分记录
 CHALLENGE_SONGS = [
     # 若只输入两首歌则会寻找仅针对两面的最优解，不考虑第三面
-    ("405116", "04"),  # 一生に夢が咲くように
-    ("405113", "02"),  # ハートにQ
-    ("405304", "02"),  # Shocking Party
+    ("405119", "02"),  # はじまりの羽音
+    ("405121", "02"),  # 平成ギャルズ
+    ("405107", "02"),  # diamondz
 ]
 
 # 每首歌只保留得分排名前 N 名的卡组用于求解
@@ -211,7 +211,6 @@ def find_best_three_decks(
             new_used_card_ids_set = used_card_ids_set.union(set(deck_card_ids))
             new_selected_decks_info = current_selected_decks_info + [{
                 "music_id": current_song_id,
-                "difficulty": CHALLENGE_SONGS[song_idx][1],  # Get difficulty from CHALLENGE_SONGS
                 "deck_card_ids": deck_card_ids,
                 "score": deck_score,
                 "pt": deck_pt,
