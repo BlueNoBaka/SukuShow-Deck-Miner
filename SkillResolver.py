@@ -4,6 +4,7 @@ from RLiveStatus import *
 from RDeck import Card
 
 logger = logging.getLogger(__name__)
+flag_debug = logger.isEnabledFor(logging.DEBUG)
 
 
 class TargetType(Enum):
@@ -34,7 +35,7 @@ def CheckTarget(target_id: str, card: Card = None):
     Returns:
         bool: 如果条件满足则返回 True，否则返回 False。
     """
-    if logger.isEnabledFor(logging.DEBUG):
+    if flag_debug:
         logger.debug(f"\n--- 检查C位特性目标ID: {target_id} ---")
 
     # 所有目标ID都是5位数字
@@ -49,7 +50,7 @@ def CheckTarget(target_id: str, card: Card = None):
         logger.error(f"  错误: 无法解析条件ID '{target_id}' -> 不满足")
         return False
 
-    if logger.isEnabledFor(logging.DEBUG):
+    if flag_debug:
         logger.debug(f"  解析结果: 目标类型={target_type.name}, 数值={target_value}")
 
     is_satisfied = False
@@ -58,19 +59,19 @@ def CheckTarget(target_id: str, card: Card = None):
         case TargetType.Member:
             if card.characters_id == target_value:
                 is_satisfied = True
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 logger.debug(f"  条件: 指定成员 -> {'满足' if is_satisfied else '不满足'} {card.full_name}")
 
         case TargetType.Unit:
             if card.characters_id in UNIT_DICT[target_value]:
                 is_satisfied = True
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 logger.debug(f"  条件: 指定小组 -> {'满足' if is_satisfied else '不满足'} {card.full_name}")
 
         case TargetType.Generation:
             if str(card.characters_id).startswith(str(target_value)):
                 is_satisfied = True
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 logger.debug(f"  条件: 指定期数 -> {'满足' if is_satisfied else '不满足'} {card.full_name}")
 
         case TargetType.StyleType:
@@ -87,7 +88,10 @@ def CheckTarget(target_id: str, card: Card = None):
 
 
 def CheckMultiTarget(target_ids: list[str], card=None):
-    result = any(CheckTarget(target_id, card) for target_id in target_ids)
+    if len(target_ids) - 1:
+        result = any(CheckTarget(target_id, card) for target_id in target_ids)
+    else:
+        result = CheckTarget(target_ids[0], card)
     return result
 
 
@@ -118,7 +122,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         effect_id (int): C位特性效果的ID。
         target (str)
     """
-    if logger.isEnabledFor(logging.DEBUG):
+    if flag_debug:
         logger.debug(f"\n--- 解析效果ID: {effect_id} ---")
 
     # 将ID解析为字符串方便操作
@@ -137,7 +141,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         logger.error(f"错误: 效果ID '{effect_id}' 长度不符合已知规则 (8或9位)。")
         return
 
-    if logger.isEnabledFor(logging.DEBUG):
+    if flag_debug:
         logger.debug(f"  解析结果: 类型编号={enum_base_value}, 方向={change_direction}, 数值={value_data}")
 
     # 根据解析结果应用效果
@@ -156,7 +160,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, card=card):
                     card.smile *= (1 + change_amount)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: Smile值 {action} {change_amount*100:.0f}%")
 
@@ -165,7 +169,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, card=card):
                     card.pure *= (1 + change_amount)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: Pure值 {action} {change_amount*100:.0f}%")
 
@@ -174,7 +178,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, card=card):
                     card.cool *= (1 + change_amount)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: Cool值 {action} {change_amount*100:.0f}%")
 
@@ -183,7 +187,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, card=card):
                     card.smile += value_data * change_sign
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: Smile值 {action} {value_data}")
 
@@ -192,7 +196,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, card=card):
                     card.pure += value_data * change_sign
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: Pure值 {action} {value_data}")
 
@@ -201,7 +205,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, card=card):
                     card.cool += value_data * change_sign
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: Cool值 {action} {value_data}")
 
@@ -210,7 +214,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, card=card):
                     card.mental = ceil(card.mental * (1 + change_amount * change_sign))
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: 血量 {action} {change_amount*100:.0f}%")
 
@@ -218,7 +222,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, card=card):
                     card.mental += value_data * change_sign
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: 血量 {action} {value_data}")
 
@@ -226,28 +230,28 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, card=card):
                     card.cost_change(value_data * change_sign)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: AP消耗 {action} {value_data}")
 
         case CenterAttributeEffectType.CoolTimeChange:
             change_amount_seconds = value_data / 100.0
             player_attrs.cooldown += change_amount_seconds * change_sign
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  应用效果: 技能CD {action} {change_amount_seconds:.0f}s")
 
         case CenterAttributeEffectType.APGainRateChange:
             change_amount = value_data / 100.0
             player_attrs.ap_gain_rate += change_amount * change_sign
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  应用效果: AP Gain Rate {action} {change_amount:.2f}%")
 
         case CenterAttributeEffectType.VoltageGainRateChange:
             change_amount = value_data / 100.0
             player_attrs.voltage_gain_rate += change_amount * change_sign
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  应用效果: Voltage Gain Rate {action} {change_amount:.2f}%")
 
@@ -255,7 +259,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             # 暂未实装，占位代码
             change_amount = value_data / 100.0
             player_attrs.ap_rate += change_amount * change_sign
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  应用效果: APRateChangeResetGuard {action} {change_amount:.2f}%")
 
@@ -316,7 +320,7 @@ def CheckSkillCondition(player_attrs: PlayerAttributes, condition_id: str, card:
 
     # 特殊ID "0" 表示无条件，总是满足
     if condition_id == "0":
-        if logger.isEnabledFor(logging.DEBUG):
+        if flag_debug:
             logger.debug("  条件: 无条件 -> 满足")
         return True
 
@@ -327,7 +331,7 @@ def CheckSkillCondition(player_attrs: PlayerAttributes, condition_id: str, card:
     match condition_type:
         case SkillConditionType.FeverTime:
             is_satisfied = player_attrs.voltage.fever
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 logger.debug(f"  条件: Fever 中 -> {'满足' if is_satisfied else '不满足'}")
 
         case SkillConditionType.VoltageLevel:
@@ -336,11 +340,11 @@ def CheckSkillCondition(player_attrs: PlayerAttributes, condition_id: str, card:
 
             if operator_or_flag == SkillComparisonOperator.ABOVE_OR_EQUAL:  # >=
                 is_satisfied = (current_level >= condition_value)
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"  条件: Voltage Lv. >= {condition_value} (当前: Lv.{current_level}) -> {'满足' if is_satisfied else '不满足'}")
             elif operator_or_flag == SkillComparisonOperator.BELOW_OR_EQUAL:  # <
                 is_satisfied = (current_level <= condition_value)
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"  条件: Voltage Lv. <= {condition_value} (当前: Lv.{current_level}) -> {'满足' if is_satisfied else '不满足'}")
             else:
                 logger.error(f"  错误: 未知的 VoltageLevel 运算符 '{operator_or_flag}'。 -> 不满足")
@@ -352,11 +356,11 @@ def CheckSkillCondition(player_attrs: PlayerAttributes, condition_id: str, card:
 
             if operator_or_flag == SkillComparisonOperator.ABOVE_OR_EQUAL:  # >=
                 is_satisfied = (current_value >= required_rate)
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"  条件: HP >= {required_rate:.2f}% (当前: {current_value:.2f}%) -> {'满足' if is_satisfied else '不满足'}")
             elif operator_or_flag == SkillComparisonOperator.BELOW_OR_EQUAL:  # <
                 is_satisfied = (current_value <= required_rate)
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"  条件: HP <= {required_rate:.2f}% (当前: {current_value:.2f}%) -> {'满足' if is_satisfied else '不满足'}")
             else:
                 logger.error(f"  错误: 未知的 MentalRate 运算符 '{operator_or_flag}'。 -> 不满足")
@@ -367,11 +371,11 @@ def CheckSkillCondition(player_attrs: PlayerAttributes, condition_id: str, card:
 
             if operator_or_flag == SkillComparisonOperator.ABOVE_OR_EQUAL:  # >=
                 is_satisfied = (current_value >= condition_value)
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"  条件: 合计技能次数 >= {condition_value} (当前: {current_value}) -> {'满足' if is_satisfied else '不满足'}")
             elif operator_or_flag == SkillComparisonOperator.BELOW_OR_EQUAL:  # <
                 is_satisfied = (current_value <= condition_value)
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"  条件: 合计技能次数 <= {condition_value} (当前: {current_value}) -> {'满足' if is_satisfied else '不满足'}")
             else:
                 logger.error(f"  错误: 未知的 UsedAllSkillCount 运算符 '{operator_or_flag}'。 -> 不满足")
@@ -382,11 +386,11 @@ def CheckSkillCondition(player_attrs: PlayerAttributes, condition_id: str, card:
 
             if operator_or_flag == SkillComparisonOperator.ABOVE_OR_EQUAL:  # >=
                 is_satisfied = (current_value >= condition_value)
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"  条件: 卡牌 {card.full_name} 使用次数 >= {condition_value} (当前: {current_value}) -> {'满足' if is_satisfied else '不满足'}")
             elif operator_or_flag == SkillComparisonOperator.BELOW_OR_EQUAL:  # <=
                 is_satisfied = (current_value <= condition_value)
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"  条件: 卡牌 {card.full_name} 使用次数 <= {condition_value} (当前: {current_value}) -> {'满足' if is_satisfied else '不满足'}")
             else:
                 logger.error(f"  错误: 未知的 UsedSkillCount 运算符 '{operator_or_flag}'。 -> 不满足")
@@ -396,9 +400,14 @@ def CheckSkillCondition(player_attrs: PlayerAttributes, condition_id: str, card:
 
     return is_satisfied
 
-def CheckMultiSkillCondition(player_attrs: PlayerAttributes, condition_id: list[str], card: Card = None) -> bool:
-    result = all(CheckSkillCondition(player_attrs, condition, card) for condition in condition_id)
+
+def CheckMultiSkillCondition(player_attrs: PlayerAttributes, condition_ids: list[str], card: Card = None) -> bool:
+    if len(condition_ids) - 1:
+        result = all(CheckSkillCondition(player_attrs, condition, card) for condition in condition_ids)
+    else:
+        result = CheckSkillCondition(player_attrs, condition_ids[0], card)
     return result
+
 
 class SkillEffectType(Enum):
     """
@@ -465,7 +474,7 @@ def ApplySkillEffect(player_attrs: PlayerAttributes, effect_id: int, card: Card 
             else:
                 ap_amount = value_data * change_factor / 10000.0
             player_attrs.ap = max(0, player_attrs.ap + ap_amount)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "恢复" if change_direction == 0 else "消耗"  # AP is typically recovered
                 logger.debug(f"  应用效果: AP {action} {ap_amount:.1f} 点")
 
@@ -474,11 +483,11 @@ def ApplySkillEffect(player_attrs: PlayerAttributes, effect_id: int, card: Card 
             score_rate = 100
             if player_attrs.next_score_gain_rate:
                 score_rate += player_attrs.next_score_gain_rate.pop(0)
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"分加成: * {score_rate:.2f}%")
             result = value_data * score_rate / 1000000
             player_attrs.score_add(result)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "获得" if change_direction == 0 else "减少"
                 logger.debug(f"  应用效果: {action} Appeal值 {value_data / 100:.2f}% 的得分")
 
@@ -488,13 +497,13 @@ def ApplySkillEffect(player_attrs: PlayerAttributes, effect_id: int, card: Card 
             if change_factor == 1:
                 if player_attrs.next_voltage_gain_rate:
                     voltage_rate += player_attrs.next_voltage_gain_rate.pop(0)
-                    if logger.isEnabledFor(logging.DEBUG):
+                    if flag_debug:
                         logger.debug(f"电加成: * {voltage_rate:.2f}%")
                 result = ceil(value_data * voltage_rate / 100)
             else:
                 result = -1 * value_data
             player_attrs.voltage.add_points(result)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  应用效果: Voltage Pt {action} {value_data} 点")
 
@@ -502,14 +511,14 @@ def ApplySkillEffect(player_attrs: PlayerAttributes, effect_id: int, card: Card 
             # MentalRateChange here is HP change, value is a percentage (e.g., 20.00% -> 2000). Divide by 100.0
             hp_percent = value_data / 100.0
             player_attrs.mental.skill_add(hp_percent * change_factor)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "恢复" if change_direction == 0 else "扣除"
                 logger.debug(f"  应用效果: HP {action} {hp_percent:.2f}%")
 
         case SkillEffectType.DeckReset:
             # Deck reset, this is an action, typically no numerical value
             player_attrs.deck.reset()
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 logger.debug(f"  应用效果: 重置牌库")
 
         case SkillEffectType.CardExcept:
@@ -521,7 +530,7 @@ def ApplySkillEffect(player_attrs: PlayerAttributes, effect_id: int, card: Card 
                 if deckcard.is_except:
                     player_attrs.deck.queue.pop(index)
                     break
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 logger.debug(f"  应用效果: 卡牌除外: {card.full_name}")
 
         case SkillEffectType.NextAPGainRateChange:
@@ -531,7 +540,7 @@ def ApplySkillEffect(player_attrs: PlayerAttributes, effect_id: int, card: Card 
                     player_attrs.next_score_gain_rate[i] += bonus_percent
                 else:
                     player_attrs.next_score_gain_rate.append(bonus_percent)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 logger.debug(f"  应用效果: 分加成 {bonus_percent:.2f}% ({usage_count} 次)")
 
         case SkillEffectType.NextVoltageGainRateChange:
@@ -541,12 +550,12 @@ def ApplySkillEffect(player_attrs: PlayerAttributes, effect_id: int, card: Card 
                     player_attrs.next_voltage_gain_rate[i] += bonus_percent
                 else:
                     player_attrs.next_voltage_gain_rate.append(bonus_percent)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 logger.debug(f"  应用效果: 电加成 {bonus_percent:.2f}% ({usage_count} 次)")
 
         case _:
             logger.error(f"  未知技能效果类型: {effect_type.name} ({effect_id})")
-    if logger.isEnabledFor(logging.DEBUG):
+    if flag_debug:
         logger.debug(player_attrs)
 
 
@@ -609,22 +618,22 @@ def CheckCenterSkillCondition(player_attrs: PlayerAttributes, condition_id: str,
         match condition_type:
             case CenterSkillConditionType.LiveStart:
                 is_satisfied = (event == "LiveStart")
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"  条件: Live开始时 -> {'满足' if is_satisfied else '不满足'}")
 
             case CenterSkillConditionType.LiveEnd:
                 is_satisfied = (event == "LiveEnd")
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"  条件: Live结束时 -> {'满足' if is_satisfied else '不满足'}")
 
             case CenterSkillConditionType.FeverStart:
                 is_satisfied = (event == "FeverStart")
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"  条件: Fever开始时 -> {'满足' if is_satisfied else '不满足'}")
 
             case CenterSkillConditionType.FeverTime:
                 is_satisfied = player_attrs.voltage.fever
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"  条件: Fever Time 中 -> {'满足' if is_satisfied else '不满足'}")
 
             case CenterSkillConditionType.VoltageLevel:
@@ -632,11 +641,11 @@ def CheckCenterSkillCondition(player_attrs: PlayerAttributes, condition_id: str,
 
                 if operator_or_flag == SkillComparisonOperator.ABOVE_OR_EQUAL:  # >=
                     is_satisfied = (current_level >= condition_value)
-                    if logger.isEnabledFor(logging.DEBUG):
+                    if flag_debug:
                         logger.debug(f"  条件: Voltage Lv. >= {condition_value} (当前: Lv.{current_level}) -> {'满足' if is_satisfied else '不满足'}")
                 elif operator_or_flag == SkillComparisonOperator.BELOW_OR_EQUAL:  # <
                     is_satisfied = (current_level <= condition_value)
-                    if logger.isEnabledFor(logging.DEBUG):
+                    if flag_debug:
                         logger.debug(f"  条件: Voltage Lv. <= {condition_value} (当前: Lv.{current_level}) -> {'满足' if is_satisfied else '不满足'}")
                 else:
                     logger.error(f"  错误: 未知的 VoltageLevel 运算符 '{condition_id}'。 -> 不满足")
@@ -648,11 +657,11 @@ def CheckCenterSkillCondition(player_attrs: PlayerAttributes, condition_id: str,
 
                 if operator_or_flag == SkillComparisonOperator.ABOVE_OR_EQUAL:  # >=
                     is_satisfied = (current_value >= required_rate)
-                    if logger.isEnabledFor(logging.DEBUG):
+                    if flag_debug:
                         logger.debug(f"  条件: HP >= {required_rate:.2f}% (当前: {current_value:.2f}%) -> {'满足' if is_satisfied else '不满足'}")
                 elif operator_or_flag == SkillComparisonOperator.BELOW_OR_EQUAL:  # <
                     is_satisfied = (current_value <= required_rate)
-                    if logger.isEnabledFor(logging.DEBUG):
+                    if flag_debug:
                         logger.debug(f"  条件: HP <= {required_rate:.2f}% (当前: {current_value:.2f}%) -> {'满足' if is_satisfied else '不满足'}")
                 else:
                     logger.error(f"  错误: 未知的 MentalRate 运算符 '{operator_or_flag}'。 -> 不满足")
@@ -663,11 +672,11 @@ def CheckCenterSkillCondition(player_attrs: PlayerAttributes, condition_id: str,
 
                 if operator_or_flag == SkillComparisonOperator.ABOVE_OR_EQUAL:  # >=
                     is_satisfied = (current_value >= condition_value)
-                    if logger.isEnabledFor(logging.DEBUG):
+                    if flag_debug:
                         logger.debug(f"  条件: 合计技能次数 >= {condition_value} (当前: {current_value}) -> {'满足' if is_satisfied else '不满足'}")
                 elif operator_or_flag == SkillComparisonOperator.BELOW_OR_EQUAL:  # <
                     is_satisfied = (current_value <= condition_value)
-                    if logger.isEnabledFor(logging.DEBUG):
+                    if flag_debug:
                         logger.debug(f"  条件: 合计技能次数 <= {condition_value} (当前: {current_value}) -> {'满足' if is_satisfied else '不满足'}")
                 else:
                     logger.error(f"  错误: 未知的 UsedAllSkillCount 运算符 '{operator_or_flag}'。 -> 不满足")
@@ -705,7 +714,7 @@ def ApplyCenterSkillEffect(player_attrs: PlayerAttributes, effect_id: int):
     # The change direction is *always* the second digit from the left.
 
     if len(id_str) != 9:
-        if logger.isEnabledFor(logging.DEBUG):
+        if flag_debug:
             logger.error(f"错误: 效果ID '{effect_id}' 长度不符合已知规则 (应为9位)。")
         return
 
@@ -731,7 +740,7 @@ def ApplyCenterSkillEffect(player_attrs: PlayerAttributes, effect_id: int):
             else:
                 ap_amount = value_data * change_factor / 10000.0
             player_attrs.ap = max(0, player_attrs.ap + ap_amount)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "恢复" if change_direction == 0 else "消耗"  # AP is typically recovered
                 logger.debug(f"  应用效果: AP {action} {ap_amount:.1f} 点")
 
@@ -741,11 +750,11 @@ def ApplyCenterSkillEffect(player_attrs: PlayerAttributes, effect_id: int):
 
             if player_attrs.next_score_gain_rate:
                 score_rate += player_attrs.next_score_gain_rate.pop(0)
-                if logger.isEnabledFor(logging.DEBUG):
+                if flag_debug:
                     logger.debug(f"分加成: * {score_rate:.2f}%")
             result = value_data * score_rate / 1000000
             player_attrs.score_add(result)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "获得" if change_direction == 0 else "减少"
                 logger.debug(f"  应用效果: {action} Appeal值 {value_data / 100:.2f}% 的分数")
 
@@ -755,13 +764,13 @@ def ApplyCenterSkillEffect(player_attrs: PlayerAttributes, effect_id: int):
             if change_factor == 1:
                 if player_attrs.next_voltage_gain_rate:
                     voltage_rate += player_attrs.next_voltage_gain_rate.pop(0)
-                    if logger.isEnabledFor(logging.DEBUG):
+                    if flag_debug:
                         logger.debug(f"电加成: * {voltage_rate:.2f}%")
                 result = ceil(value_data * voltage_rate / 100)
             else:
                 result = -1 * value_data
             player_attrs.voltage.add_points(result)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  应用效果: Voltage Points {action} {value_data} 点")
 
@@ -769,11 +778,11 @@ def ApplyCenterSkillEffect(player_attrs: PlayerAttributes, effect_id: int):
             # MentalRateChange here is HP change, value is a percentage (e.g., 20.00% -> 2000). Divide by 100.0
             hp_percent = value_data / 100.0
             player_attrs.mental.skill_add(hp_percent * change_factor)
-            if logger.isEnabledFor(logging.DEBUG):
+            if flag_debug:
                 action = "恢复" if change_direction == 0 else "扣除"
                 logger.debug(f"  应用效果: HP {action} {hp_percent:.2f}%")
 
-    if logger.isEnabledFor(logging.DEBUG):
+    if flag_debug:
         logger.debug(player_attrs)
 
 

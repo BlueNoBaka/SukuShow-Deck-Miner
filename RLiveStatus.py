@@ -4,6 +4,7 @@ from platform import python_implementation
 from RDeck import Deck
 
 logger = logging.getLogger(__name__)
+flag_debug = logger.isEnabledFor(logging.DEBUG)
 
 pypy_impl = python_implementation() == "PyPy"
 if pypy_impl:
@@ -74,7 +75,7 @@ class Voltage:
             self.level *= 2
         self.bonus = (self.level + 10) / 10
 
-        if logger.isEnabledFor(logging.DEBUG):
+        if flag_debug:
             if old_level != self.level:
                 logger.debug(f"  Voltage等级变化: 从 Lv.{old_level} -> Lv.{self.level}")
 
@@ -88,7 +89,7 @@ class Voltage:
         self._current_points += amount
         if self._current_points < 0:  # VoltagePt不能低于0
             self._current_points = 0
-        if logger.isEnabledFor(logging.DEBUG):
+        if flag_debug:
             logger.debug(f"  VoltagePt {'+' if amount >= 0 else '-'}{abs(amount)} 点 (当前: {self._current_points} Pt)")
         self._update_level()
 
@@ -101,7 +102,7 @@ class Voltage:
 
         old_points = self._current_points
         self._current_points = new_points
-        if logger.isEnabledFor(logging.DEBUG):
+        if flag_debug:
             logger.debug(f"  VoltagePt 从 {old_points} -> {self._current_points} 点")
         self._update_level()
 

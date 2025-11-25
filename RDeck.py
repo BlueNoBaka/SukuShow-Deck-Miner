@@ -158,11 +158,8 @@ class Deck():
         self.reset()
 
     def reset(self):
-        self.queue = []
-        for card in self.cards:
-            if not card.is_except:
-                self.queue.append(card)
-        if len(self.queue) == 0:
+        self.queue = [card for card in self.cards if not card.is_except]
+        if not self.queue:
             self.queue.append(None)
             # 卡组全部除外时特殊处理
 
@@ -194,10 +191,7 @@ class Deck():
         return result
 
     def used_all_skill_calc(self):
-        result = 0
-        for card in self.cards:
-            result += card.active_count
-        return result
+        return len(self.card_log)
 
 
 if __name__ == "__main__":
