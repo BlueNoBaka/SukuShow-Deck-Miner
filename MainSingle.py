@@ -175,7 +175,7 @@ if __name__ == "__main__":
                     # 连击计数、AP速度更新、回复AP、扣血
                     logger.timing(f"[连击{player.combo}x]\t总分: {player.score}\t时间: {timestamp}\t{event}")
                 else:
-                    player.combo_add("PERFECT")
+                    player.combo_add("PERFECT+")
                     # 连击计数、AP速度更新、回复AP、扣血
                     logger.timing(f"[连击{player.combo}x]\t总分: {player.score}\t时间: {timestamp}\t{event}")
                 # AP足够 且 冷却完毕 时打出技能
@@ -209,7 +209,7 @@ if __name__ == "__main__":
                     player.combo_add("MISS", event[1:])
                     logger.timing(f"[连击{player.combo}x]\t总分: {player.score}\t时间: {timestamp}\tMISS: {event[1:]}\t{player.mental}")
                 else:
-                    player.combo_add("PERFECT")
+                    player.combo_add("PERFECT+")
                     logger.timing(f"[连击{player.combo}x]\t总分: {player.score}\t时间: {timestamp}\t{event[1:]} (延后)")
 
             case "LiveStart" | "LiveEnd" | "FeverStart":

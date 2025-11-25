@@ -119,7 +119,7 @@ def run_game_simulation(
                         except MentalDown:
                             break
                 else:
-                    player.combo_add("PERFECT")
+                    player.combo_add("PERFECT+")
 
                 if player.CDavailable and cardnow and player.ap >= cardnow.cost:
                     player.ap -= cardnow.cost
@@ -148,7 +148,7 @@ def run_game_simulation(
                     except MentalDown:
                         break
                 else:
-                    player.combo_add("PERFECT")
+                    player.combo_add("PERFECT+")
 
             case "LiveStart" | "LiveEnd" | "FeverStart":
                 if event == "FeverStart":
