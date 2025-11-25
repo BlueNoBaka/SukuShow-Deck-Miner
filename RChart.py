@@ -390,8 +390,11 @@ class Chart:
         self.ChartEvents.append((str(self.FeverStartTime), "FeverStart"))
         for note in self.ChartNoteUnit:
             self.ChartEvents.append((note.just, NoteTypes(note.Type).name))
-            for timestamp in note.holds:
-                self.ChartEvents.append((timestamp, "HoldMid"))
+            for index, timestamp in enumerate(note.holds, 1):
+                if index != len(note.holds):
+                    self.ChartEvents.append((timestamp, "HoldMid"))
+                else:
+                    self.ChartEvents.append((timestamp, "Hold"))
 
         self.ChartEvents.append((str(self.FeverEndTime), "FeverEnd"))
         self.ChartEvents.append((str(self.music.PlayTime / 1000), "LiveEnd"))
