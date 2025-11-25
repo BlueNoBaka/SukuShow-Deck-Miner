@@ -86,9 +86,8 @@ def CheckTarget(target_id: str, card: Card = None):
     return is_satisfied
 
 
-def CheckMultiTarget(target_id: str, card=None):
-    targets = target_id.split(",")
-    result = any(CheckTarget(target_id, card) for target_id in targets)
+def CheckMultiTarget(target_ids: list[str], card=None):
+    result = any(CheckTarget(target_id, card) for target_id in target_ids)
     return result
 
 
@@ -111,7 +110,7 @@ class CenterAttributeEffectType(Enum):
     APRateChangeResetGuard = 13
 
 
-def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target: str = None):
+def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target: list[str] = None):
     """
     根据EffectsID解析并应用C位特性。
 
@@ -155,7 +154,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             # 比率变化按100.00% = 10000计算，所以需要除以10000
             change_amount = value_data / 10000.0
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_id=target, card=card):
+                if CheckMultiTarget(target_ids=target, card=card):
                     card.smile *= (1 + change_amount)
             if logger.isEnabledFor(logging.DEBUG):
                 action = "增加" if change_direction == 0 else "减少"
@@ -164,7 +163,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         case CenterAttributeEffectType.PureRateChange:
             change_amount = value_data / 10000.0
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_id=target, card=card):
+                if CheckMultiTarget(target_ids=target, card=card):
                     card.pure *= (1 + change_amount)
             if logger.isEnabledFor(logging.DEBUG):
                 action = "增加" if change_direction == 0 else "减少"
@@ -173,7 +172,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         case CenterAttributeEffectType.CoolRateChange:
             change_amount = value_data / 10000.0
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_id=target, card=card):
+                if CheckMultiTarget(target_ids=target, card=card):
                     card.cool *= (1 + change_amount)
             if logger.isEnabledFor(logging.DEBUG):
                 action = "增加" if change_direction == 0 else "减少"
@@ -182,7 +181,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         case CenterAttributeEffectType.SmileValueChange:
             # 暂未实装，占位代码
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_id=target, card=card):
+                if CheckMultiTarget(target_ids=target, card=card):
                     card.smile += value_data * change_sign
             if logger.isEnabledFor(logging.DEBUG):
                 action = "增加" if change_direction == 0 else "减少"
@@ -191,7 +190,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         case CenterAttributeEffectType.PureValueChange:
             # 暂未实装，占位代码
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_id=target, card=card):
+                if CheckMultiTarget(target_ids=target, card=card):
                     card.pure += value_data * change_sign
             if logger.isEnabledFor(logging.DEBUG):
                 action = "增加" if change_direction == 0 else "减少"
@@ -200,7 +199,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         case CenterAttributeEffectType.CoolValueChange:
             # 暂未实装，占位代码
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_id=target, card=card):
+                if CheckMultiTarget(target_ids=target, card=card):
                     card.cool += value_data * change_sign
             if logger.isEnabledFor(logging.DEBUG):
                 action = "增加" if change_direction == 0 else "减少"
@@ -209,7 +208,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         case CenterAttributeEffectType.MentalRateChange:
             change_amount = value_data / 10000.0
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_id=target, card=card):
+                if CheckMultiTarget(target_ids=target, card=card):
                     card.mental = ceil(card.mental * (1 + change_amount * change_sign))
             if logger.isEnabledFor(logging.DEBUG):
                 action = "增加" if change_direction == 0 else "减少"
@@ -217,7 +216,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
 
         case CenterAttributeEffectType.MentalValueChange:
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_id=target, card=card):
+                if CheckMultiTarget(target_ids=target, card=card):
                     card.mental += value_data * change_sign
             if logger.isEnabledFor(logging.DEBUG):
                 action = "增加" if change_direction == 0 else "减少"
@@ -225,7 +224,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
 
         case CenterAttributeEffectType.ConsumeAPChange:
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_id=target, card=card):
+                if CheckMultiTarget(target_ids=target, card=card):
                     card.cost_change(value_data * change_sign)
             if logger.isEnabledFor(logging.DEBUG):
                 action = "增加" if change_direction == 0 else "减少"
@@ -397,6 +396,9 @@ def CheckSkillCondition(player_attrs: PlayerAttributes, condition_id: str, card:
 
     return is_satisfied
 
+def CheckMultiSkillCondition(player_attrs: PlayerAttributes, condition_id: list[str], card: Card = None) -> bool:
+    result = all(CheckSkillCondition(player_attrs, condition, card) for condition in condition_id)
+    return result
 
 class SkillEffectType(Enum):
     """
@@ -551,7 +553,7 @@ def ApplySkillEffect(player_attrs: PlayerAttributes, effect_id: int, card: Card 
 def UseCardSkill(player_attrs: PlayerAttributes, effects: list = None, conditions: list = None, card: Card = None):
     flags = []
     for condition in conditions:
-        flags.append(CheckSkillCondition(player_attrs, condition, card))
+        flags.append(CheckMultiSkillCondition(player_attrs, condition, card))
     for flag, effect in zip(flags, effects):
         if flag:
             ApplySkillEffect(player_attrs, effect, card)
