@@ -18,9 +18,9 @@ logging.basicConfig(
 # 求解前需运行 MainBatch.py 生成对应的卡组得分记录
 CHALLENGE_SONGS = [
     # 若只输入两首歌则会寻找仅针对两面的最优解，不考虑第三面
-    ("405119", "02"),  # はじまりの羽音
-    ("405121", "02"),  # 平成ギャルズ
-    ("405107", "02"),  # diamondz
+    ("405123", "02"),  # シアター生き様
+    ("405115", "02"),  # ドライブ・スペード・クレイジー
+    ("405124", "02"),  # IcHiGo milK love
 ]
 
 # 每首歌只保留得分排名前 N 名的卡组用于求解
@@ -29,6 +29,9 @@ TOP_N = 50000
 # 在控制台与文件输出中显示卡牌名称
 SHOWNAME = True
 
+# 寻找最优解时忽略包含特定卡牌的卡组 (三面均生效)
+# 填写格式为: [卡牌id1, 卡牌id2, ...]
+FORBIDDEN_CARD = []
 
 def get_song_title() -> dict:
     try:
@@ -111,6 +114,7 @@ if __name__ == "__main__":
     card_to_bit = {cid: i for i, cid in enumerate(sorted(all_cards))}
     logger.info(f"Loaded {len(card_to_bit)} unique cards")
     assert len(card_to_bit) <= 64, "卡牌种类超过64张时需使用更复杂的bitarray方案"
+    assert len(card_to_bit) <= 6 * len(CHALLENGE_SONGS), "可用卡牌过少，必定出现重复卡牌"
 
     # === 转换deck为bitmask ===
     def deck_to_mask(deck):
@@ -123,6 +127,9 @@ if __name__ == "__main__":
     for data in levels_raw:
         decks = []
         for i, deck in enumerate(data, start=1):
+            # 忽略包含特定卡牌的卡组
+            if any(cid in deck["deck_card_ids"] for cid in FORBIDDEN_CARD):
+                    continue
             decks.append({
                 "mask": deck_to_mask(deck),
                 "rank": i,
@@ -189,20 +196,23 @@ if __name__ == "__main__":
     output = []
     output.append("=== Best Combination ===")
 
-    output.append(f"Total Pt: {best_pt:16,}")
-    for i, d in enumerate(best_combo):
-        if i < len(CHALLENGE_SONGS):
-            song_id, difficulty = CHALLENGE_SONGS[i]
-            output.append(f"  Song {i+1} | {song_id} ({difficulty}) | {title.get(song_id, '？？？')}")
-            output.append(f"    Score: {d['score']:15,}")
-            output.append(f"    Pt: {d['pt']:18,}\tRank: {d['rank']}")
-            output.append(f"    Deck (ID): {d['deck']}")
-            if SHOWNAME:
-                output.append(f"    {[cardname.get(cid, '？？？') for cid in d['deck'][:3]]}")
-                output.append(f"    {[cardname.get(cid, '？？？') for cid in d['deck'][3:]]}")
-    output = "\n".join(output)
-    logger.info(f"{output}")
-    with open("best_3_song_combo.txt", "w", encoding="utf-8") as f:
-        f.write(output)
-        f.write("\n")
-    logger.info(f"Best 3-song combination saved to best_3_song_combo.txt")
+    if best_pt > 0:
+        output.append(f"Total Pt: {best_pt:16,}")
+        for i, d in enumerate(best_combo):
+            if i < len(CHALLENGE_SONGS):
+                song_id, difficulty = CHALLENGE_SONGS[i]
+                output.append(f"  Song {i+1} | {song_id} ({difficulty}) | {title.get(song_id, '？？？')}")
+                output.append(f"    Score: {d['score']:15,}")
+                output.append(f"    Pt: {d['pt']:18,}\tRank: {d['rank']}")
+                output.append(f"    Deck (ID): {d['deck']}")
+                if SHOWNAME:
+                    output.append(f"    {[cardname.get(cid, '？？？') for cid in d['deck'][:3]]}")
+                    output.append(f"    {[cardname.get(cid, '？？？') for cid in d['deck'][3:]]}")
+        output = "\n".join(output)
+        logger.info(f"{output}")
+        with open("best_3_song_combo.txt", "w", encoding="utf-8") as f:
+            f.write(output)
+            f.write("\n")
+        logger.info(f"Best 3-song combination saved to best_3_song_combo.txt")
+    else:
+        logger.info("No valid 3-deck combination found.")
