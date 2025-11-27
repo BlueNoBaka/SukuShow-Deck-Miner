@@ -198,6 +198,8 @@ class PlayerAttributes:
         self.note_score: dict = dict()
         self.half_ap_plus: float
         self.full_ap_plus: float
+        self.prev_vo: int = -1
+        self.prev_note_score: int = 0
 
     def __str__(self) -> str:
         return (
@@ -261,6 +263,13 @@ class PlayerAttributes:
 
     def score_note(self, judgement):
         score_value = self.note_score[judgement]
+        if judgement == "PERFECT+":
+            if self.prev_vo == self.voltage.level:
+                self.score += self.prev_note_score
+            else:
+                self.prev_vo = self.voltage.level
+                self.prev_note_score = self.score_add(score_value, skill=False)
+            return self.prev_note_score
         return self.score_add(score_value, skill=False)
 
     def combo_add(self, judgement, note_type=None):
