@@ -110,6 +110,14 @@ class Card():
         self.active_count: int = 0
         self.is_except: bool = False
 
+    def __copy__(self):
+        cls = self.__class__
+        new = cls.__new__(cls)
+
+        new.__dict__ = self.__dict__.copy()
+
+        return new
+
     def __str__(self) -> str:
         return (
             # f"Card ID: {self.card_id}\n"
