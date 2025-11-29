@@ -200,6 +200,8 @@ class PlayerAttributes:
         self.full_ap_plus: float
         self.prev_vo: int = -1
         self.prev_note_score: int = 0
+        self.prev_ap_rate: float = 0.0
+        self.prev_ap: float = 0.0
 
     def __str__(self) -> str:
         return (
@@ -278,7 +280,10 @@ class PlayerAttributes:
             self.ap_rate = 1 + self.combo // 10 / 10
         match judgement:
             case "PERFECT+" | "PERFECT" | "GREAT":
-                self.ap += ceil(self.full_ap_plus * self.ap_rate) / 10000
+                if self.prev_ap_rate != self.ap_rate:
+                    self.prev_ap_rate = self.ap_rate
+                    self.prev_ap = ceil(self.full_ap_plus * self.ap_rate) / 10000
+                self.ap += self.prev_ap
             case "GOOD":
                 self.ap += ceil(self.half_ap_plus * self.ap_rate) / 10000
             case "BAD" | "MISS":
