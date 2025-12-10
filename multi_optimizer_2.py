@@ -18,9 +18,9 @@ logging.basicConfig(
 # 求解前需运行 MainBatch.py 生成对应的卡组得分记录
 CHALLENGE_SONGS = [
     # 若只输入两首歌则会寻找仅针对两面的最优解，不考虑第三面
-    ("405123", "02"),  # シアター生き様
-    ("405115", "02"),  # ドライブ・スペード・クレイジー
-    ("405124", "02"),  # IcHiGo milK love
+    ("405106", "02"),  # My Lucky Clover
+    ("405127", "02"),  # Hip, hip, hooray!
+    ("105103", "02"),  # チリコンカン
 ]
 
 # 每首歌只保留得分排名前 N 名的卡组用于求解
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     card_to_bit = {cid: i for i, cid in enumerate(sorted(all_cards))}
     logger.info(f"Loaded {len(card_to_bit)} unique cards")
     assert len(card_to_bit) <= 64, "卡牌种类超过64张时需使用更复杂的bitarray方案"
-    assert len(card_to_bit) <= 6 * len(CHALLENGE_SONGS), "可用卡牌过少，必定出现重复卡牌"
+    assert len(card_to_bit) >= 6 * len(CHALLENGE_SONGS), "可用卡牌过少，必定出现重复卡牌"
 
     # === 转换deck为bitmask ===
     def deck_to_mask(deck):
