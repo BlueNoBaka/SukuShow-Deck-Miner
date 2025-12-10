@@ -1,5 +1,6 @@
 import logging
 import os
+import heapq
 # 导入所有 R 模块和 db_load 函数
 from RCardData import db_load
 from RChart import Chart, MusicDB
@@ -88,8 +89,6 @@ def run_game_simulation(
     player.basescore_calc(c.AllNoteSize)
     # player.cooldown = int(player.cooldown * 1_000_000)
 
-    # Use a heap for ChartEvents for better performance
-    import heapq
     chart_events = c.ChartEvents
     extra_events = list()
     heapq.heappush(extra_events, (player.cooldown, "CDavailable"))
@@ -153,7 +152,7 @@ def run_game_simulation(
             case "LiveStart" | "LiveEnd" | "FeverStart":
                 if event == "FeverStart":
                     player.voltage.set_fever(True)
-                if centercard is not None:
+                if centercard:
                     for condition, effect in centercard.get_center_skill():
                         if CheckCenterSkillCondition(player, condition, centercard, event):
                             ApplyCenterSkillEffect(player, effect)
