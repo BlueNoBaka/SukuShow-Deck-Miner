@@ -116,26 +116,51 @@ if __name__ == "__main__":
     # 模拟时实际使用的卡牌范围
     card_ids = [
         1011501,  # 沙知
-        1021701, 1021523, 1021512,  # 梢: LR 银河 舞会
-        1021901, 1021801, 1021802,  # 梢: BR PE EA
-        1022701,  # 1022504, 1022521,  # 缀: LR 明月 银河
-        1022901,  # 1022801, 1022802,  # 缀: BR PE EA
-        # 1023701, 1023520,  # 慈: LR 银河
-        1023901,  # 1023801, 1023802,  # 慈: BR PE EA
+        1021701, 1021702, 1021523, 1021512,  # 梢: LR 银河 舞会
+        # 1021901, 
+        1021801, 1021802,  # 梢: BR PE EA
+        1022701, 1022702, # 1022504, 1022521,  # 缀: LR 明月 银河
+        #1022901, 
+        1022801, 1022802,  # 缀: BR PE EA
+        1023702,  # 1023520,  # 慈: LR 银河
+        # 1023901, 1023801, 1023802,  # 慈: BR PE EA
         1031530, 1031533,  # 1031519,  # 帆: IDOME 地平 舞会
-        1031901,  # 1031801, 1031802,  #帆: BR(2024) PE EA
-        1032518, 1032528, 1032530,  # 沙: 舞会 IDOME 地平
-        1032901, 1032801, 1032802,  # 沙: BR PE EA
+        # 1031901, 
+        1031801, 1031802, 1031803,  #帆: BR(2024) PE EA
+        1032518, 1032528, 1032530, 1032532, # 沙: 舞会 IDOME 地平 Flash
+        # 1032901, 
+        1032801, 1032802, 1032803,  # 沙: BR PE EA OE
         1033514, 1033524, 1033525,  # 乃: 舞会 IDOME COCO夏
-        # 1033526, 1033528,  # 乃: 喵信号 地平
-        1033901, 1033803, 1033801, 1033802,  # 乃: BR(2024) OE PE EA
-        1041513, 1041512, 1041516,  # 1041517,  # 吟: 舞会 梦烦 水果 花火
+        1033526, 1033527, 1033528, 1033530,  # 乃: 喵信号 一生梦 地平 人偶
+        # 1033901, 
+        1033803, 1033801, 1033802,  # 乃: BR(2024) OE PE EA
+        1041513, 
+        1041512, 1041516, # 1041517,  # 吟: 舞会 梦烦 水果 花火
         1041901, 1041801, 1041802,  # 吟: BR EA OE
-        1042516,  # 1042801, 1042802,  # 铃: 太阳 EA OE
-        1043515, 1043516,  # 芽: BLAST COCO夏
-        1043902,  # 1043801, 1043802,  # 芽: BR(2025) EA OE
-        1051506, 1051503,  # 1051501, 1051502,  # 泉: 片翼 天地黎明 DB RF
-        1052506, 1052901, 1052503,  # 1052801, # 1052504  # 塞: 片翼 BR 十六夜 OE 天地黎明
+        1042515, 1042516, 1042518, 1042519, 1042801, 1042802,  # 铃: 暧昧 太阳 羽音 Flash EA OE
+        1043515, 1043516, 1043519,  # 芽: BLAST COCO夏 VS 羽音
+        # 1043902, 1043801, 1043802,  # 芽: BR(2025) EA OE    
+        1051506, 1051901, 
+        #1051503, 
+        #1051505,  # 1051501, 1051502,  # 泉: 片翼 天地黎明 FC DB RF
+        1052506, 1052901, 
+        #1052503, 1052801, # 1052504  # 塞: 片翼 BR 十六夜 OE 天地黎明
+    ]
+    card_ids_22 = [
+        1011501,  # 沙知
+        1021523, #1021901, 
+        1021512, 1021701,  # 梢: 银河 BR 舞会 LR
+        #1022521, 
+        1022701, #1022901, 1022504,  # 缀: 银河 LR BR 明月
+        1023520, 1023701, 1023901,  # 慈: 银河 LR BR
+        1031519, 1031901,  # 帆: 舞会 BR(2024)
+        1032518, #1032901,  # 沙: 舞会 BR
+        1033514, 1033525, 1033901,  # 乃: 舞会 COCO夏 BR
+        1041513,  # 吟: 舞会
+        #1042516, 1042801, 1042802, # 1042515, # 1042512,  # 铃: 太阳 EA OE 暧昧mayday 舞会
+        1043515, 1043516, 1043801, 1043802,  # 芽: BLAST COCO夏 EA OE 舞会1043512
+        1051503, #1051501, 1051502,  # 泉: 天地黎明 DB RF
+        1052901, 1052503,  # 1052504  # 塞: BR 十六夜 天地黎明
     ]
 
     # --- 配置卡组限制条件 ---
@@ -153,7 +178,7 @@ if __name__ == "__main__":
 
     # 卡组必须包含以下所有技能类型
     mustskills_all = [
-        SkillEffectType.DeckReset,  # 洗牌
+        # SkillEffectType.DeckReset,  # 洗牌
         SkillEffectType.ScoreGain,  # 分
         SkillEffectType.VoltagePointChange,  # 电
         SkillEffectType.NextAPGainRateChange,  # 分加成 (但是写作AP加成)
@@ -164,7 +189,7 @@ if __name__ == "__main__":
     ]
 
     # --- Step 2: Prepare simulation tasks ---
-    fixed_music_id = "405105"  # 乙女詞華集
+    fixed_music_id = "405106"  # My Lucky Clover
     fixed_difficulty = "02"
     fixed_player_master_level = 50
 
@@ -255,7 +280,7 @@ if __name__ == "__main__":
     with multiprocessing.Pool(processes=num_processes) as pool:
         # 若 CPU 占用率偏低，可以在此增加每次获取任务时给单个进程分配的卡组数量
         if pypy_impl:
-            chunksize = 5000
+            chunksize = 10000
         else:
             chunksize = 500
         results_iterator = pool.imap_unordered(run_game_simulation, simulation_tasks_generator, chunksize)
@@ -308,18 +333,19 @@ if __name__ == "__main__":
     logger.info(f"Total simulation time: {end_time - start_time:.2f} seconds")
 
     # --- Step 4: Save all results to JSON ---
-    all_simulation_results = []
-    for temp_file in tqdm(temp_files, desc="Merging Files"):
-        with open(temp_file, 'r') as f:
-            all_simulation_results.extend(json.load(f))
-        os.remove(temp_file)
-    json_output_filename = os.path.join("log", f"simulation_results_{fixed_music_id}_{fixed_difficulty}.json")
-    save_simulation_results(all_simulation_results, json_output_filename, calc_pt=True)
+    if best_score != -1:
+        all_simulation_results = []
+        for temp_file in tqdm(temp_files, desc="Merging Files"):
+            with open(temp_file, 'r') as f:
+                all_simulation_results.extend(json.load(f))
+            os.remove(temp_file)
+        json_output_filename = os.path.join("log", f"simulation_results_{fixed_music_id}_{fixed_difficulty}.json")
+        save_simulation_results(all_simulation_results, json_output_filename, calc_pt=True)
 
     # --- Step 5: Final Summary ---
     logger.info(f"\n--- Final Simulation Summary ---")
     logger.info(f"Map: {MUSIC_DB.get_music_by_id(fixed_music_id).Title} ({fixed_difficulty})")
-    logger.info(f"Total simulations run: {total_decks_to_simulate}")
+    logger.info(f"Total simulations run: {results_processed_count}")
     if best_score != -1:
         logger.info(f"Best Score: {best_score:,}")
         logger.info(f"Best Deck: {best_deck_info['original_index']}\t Center: {best_deck_info['center_card']}")
