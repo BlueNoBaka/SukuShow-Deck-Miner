@@ -24,13 +24,13 @@ UNIT_DICT = {101: {1021, 1031, 1041},
              105: {1051, 1052}}
 
 
-def CheckTarget(target_id: str, card: Card = None):
+def CheckTarget(target_id: str, char_id: int = None):
     """
     根据ID检查给定条件是否满足。
 
     Args:
         target_id (str): 技能条件ID。
-        card (Card): 。
+        char_id (int): 卡牌的角色ID。
 
     Returns:
         bool: 如果条件满足则返回 True，否则返回 False。
@@ -57,22 +57,19 @@ def CheckTarget(target_id: str, card: Card = None):
 
     match target_type:
         case TargetType.Member:
-            if card.characters_id == target_value:
-                is_satisfied = True
+            is_satisfied = (char_id == target_value)
             if flag_debug:
-                logger.debug(f"  条件: 指定成员 -> {'满足' if is_satisfied else '不满足'} {card.full_name}")
+                logger.debug(f"  条件: 指定成员 -> {'满足' if is_satisfied else '不满足'} {char_id}")
 
         case TargetType.Unit:
-            if card.characters_id in UNIT_DICT[target_value]:
-                is_satisfied = True
+            is_satisfied = char_id in UNIT_DICT[target_value]
             if flag_debug:
-                logger.debug(f"  条件: 指定小组 -> {'满足' if is_satisfied else '不满足'} {card.full_name}")
+                logger.debug(f"  条件: 指定小组 -> {'满足' if is_satisfied else '不满足'} {char_id}")
 
         case TargetType.Generation:
-            if str(card.characters_id).startswith(str(target_value)):
-                is_satisfied = True
+            is_satisfied = (char_id // 10 == target_value)
             if flag_debug:
-                logger.debug(f"  条件: 指定期数 -> {'满足' if is_satisfied else '不满足'} {card.full_name}")
+                logger.debug(f"  条件: 指定期数 -> {'满足' if is_satisfied else '不满足'} {char_id}")
 
         case TargetType.StyleType:
             # 暂无实装此条件的卡牌
@@ -82,16 +79,16 @@ def CheckTarget(target_id: str, card: Card = None):
             is_satisfied = True
 
         case _:
-            logger.error(f"  未知条件类型: {target_type.name} ({target_id})。 -> 不满足")
+            logger.error(f"  未知条件类型: {target_type} ({target_id})。 -> 不满足")
 
     return is_satisfied
 
 
-def CheckMultiTarget(target_ids: list[str], card=None):
+def CheckMultiTarget(target_ids: list[str], char_id=None):
     if len(target_ids) - 1:
-        result = any(CheckTarget(target_id, card) for target_id in target_ids)
+        result = any(CheckTarget(target_id, char_id) for target_id in target_ids)
     else:
-        result = CheckTarget(target_ids[0], card)
+        result = CheckTarget(target_ids[0], char_id)
     return result
 
 
@@ -158,7 +155,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             # 比率变化按100.00% = 10000计算，所以需要除以10000
             change_amount = value_data / 10000.0
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_ids=target, card=card):
+                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.smile *= (1 + change_amount)
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
@@ -167,7 +164,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         case CenterAttributeEffectType.PureRateChange:
             change_amount = value_data / 10000.0
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_ids=target, card=card):
+                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.pure *= (1 + change_amount)
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
@@ -176,7 +173,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         case CenterAttributeEffectType.CoolRateChange:
             change_amount = value_data / 10000.0
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_ids=target, card=card):
+                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.cool *= (1 + change_amount)
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
@@ -185,7 +182,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         case CenterAttributeEffectType.SmileValueChange:
             # 暂未实装，占位代码
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_ids=target, card=card):
+                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.smile += value_data * change_sign
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
@@ -194,7 +191,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         case CenterAttributeEffectType.PureValueChange:
             # 暂未实装，占位代码
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_ids=target, card=card):
+                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.pure += value_data * change_sign
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
@@ -203,7 +200,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         case CenterAttributeEffectType.CoolValueChange:
             # 暂未实装，占位代码
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_ids=target, card=card):
+                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.cool += value_data * change_sign
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
@@ -212,7 +209,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
         case CenterAttributeEffectType.MentalRateChange:
             change_amount = value_data / 10000.0
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_ids=target, card=card):
+                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.mental = ceil(card.mental * (1 + change_amount * change_sign))
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
@@ -220,7 +217,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
 
         case CenterAttributeEffectType.MentalValueChange:
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_ids=target, card=card):
+                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.mental += value_data * change_sign
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
@@ -228,7 +225,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
 
         case CenterAttributeEffectType.ConsumeAPChange:
             for card in player_attrs.deck.cards:
-                if CheckMultiTarget(target_ids=target, card=card):
+                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.cost_change(value_data * change_sign)
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
@@ -820,9 +817,9 @@ if __name__ == "__main__":
 
     # FeverTime
     CheckSkillCondition(player_attrs, 1000000)  # 1=Fever中 (True)
-    player_attrs.is_in_fever_time = False  # 改变状态
+    player_attrs.voltage.set_fever(True)  # 改变状态
     CheckSkillCondition(player_attrs, 1000000)  # 1=Fever中 (False)
-    player_attrs.is_in_fever_time = True  # 恢复状态
+    player_attrs.voltage.set_fever(False) # 恢复状态
 
     # VoltageLevel
     # 设置一个精确点数来测试等级边界
@@ -834,7 +831,7 @@ if __name__ == "__main__":
     CheckSkillCondition(player_attrs, 2200003)  # Voltage Lv. < 3 (True)
     CheckSkillCondition(player_attrs, 2200002)  # Voltage Lv. < 2 (False)
 
-    player_attrs.voltage.set_points(50000)  # 恢复状态，方便测试其他条件
+    player_attrs.voltage.set_points(0)  # 恢复状态，方便测试其他条件
 
     # MentalRate (HP百分比)
     CheckSkillCondition(player_attrs, 3110000)
@@ -847,13 +844,6 @@ if __name__ == "__main__":
     CheckSkillCondition(player_attrs, 4100010)
     CheckSkillCondition(player_attrs, 4200006)
     CheckSkillCondition(player_attrs, 4200006)
-
-    # UsedSkillCount (单卡打出次数，假设检查卡牌ID 1001)
-    CheckSkillCondition(player_attrs, 5100003, card_id_to_check=1001)
-    CheckSkillCondition(player_attrs, 5200002, card_id_to_check=1001)
-    # player_attrs.current_card_used_count[1001] = 1
-    CheckSkillCondition(player_attrs, 5200002, card_id_to_check=1001)
-    # player_attrs.current_card_used_count[1001] = 4
 
     logger.debug("\n--- 最终玩家属性 ---")
     logger.debug(player_attrs)
