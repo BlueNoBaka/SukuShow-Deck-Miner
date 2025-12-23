@@ -157,6 +157,10 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.smile *= (1 + change_amount)
+            friend = player_attrs.deck.friend
+            if friend:
+                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
+                    friend.smile *= (1 + change_amount)
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: Smile值 {action} {change_amount*100:.0f}%")
@@ -166,6 +170,10 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.pure *= (1 + change_amount)
+            friend = player_attrs.deck.friend
+            if friend:
+                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
+                    friend.pure *= (1 + change_amount)
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: Pure值 {action} {change_amount*100:.0f}%")
@@ -175,6 +183,10 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.cool *= (1 + change_amount)
+            friend = player_attrs.deck.friend
+            if friend:
+                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
+                    friend.cool *= (1 + change_amount)
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: Cool值 {action} {change_amount*100:.0f}%")
@@ -211,6 +223,10 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.mental = ceil(card.mental * (1 + change_amount * change_sign))
+            friend = player_attrs.deck.friend
+            if friend:
+                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
+                    friend.mental = ceil(friend.mental * (1 + change_amount * change_sign))
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: 血量 {action} {change_amount*100:.0f}%")
@@ -348,7 +364,7 @@ def CheckSkillCondition(player_attrs: PlayerAttributes, condition_id: str, card:
 
         case SkillConditionType.MentalRate:
             # 血量百分比，condition_value 例如 5000 代表 50.00%
-            current_value = player_attrs.mental.get_rate()
+            current_value = player_attrs.mental.rate
             required_rate = condition_value / 100.0  # 将5000转换为50.00(%)
 
             if operator_or_flag == SkillComparisonOperator.ABOVE_OR_EQUAL:  # >=
@@ -519,14 +535,7 @@ def ApplySkillEffect(player_attrs: PlayerAttributes, effect_id: int, card: Card 
                 logger.debug(f"  应用效果: 重置牌库")
 
         case SkillEffectType.CardExcept:
-            card.is_except = True
-            # 模拟器只在重置牌库时检查除外标记
-            # 对于LR梢这种先重置牌库再标记除外的卡，就会导致已被除外的LR梢多在牌库里出现一次
-            # 因此在触发除外时额外检查牌库中是否有刚被除外的卡，避免未被除外
-            for index, deckcard in enumerate(player_attrs.deck.queue):
-                if deckcard.is_except:
-                    player_attrs.deck.queue.pop(index)
-                    break
+            player_attrs.deck.exceptcard(card)
             if flag_debug:
                 logger.debug(f"  应用效果: 卡牌除外: {card.full_name}")
 
@@ -649,7 +658,7 @@ def CheckCenterSkillCondition(player_attrs: PlayerAttributes, condition_id: str,
 
             case CenterSkillConditionType.MentalRate:
                 # 血量百分比，condition_value 例如 5000 代表 50.00%
-                current_value = player_attrs.mental.get_rate()
+                current_value = player_attrs.mental.rate
                 required_rate = condition_value / 100.0  # 将5000转换为50.00%
 
                 if operator_or_flag == SkillComparisonOperator.ABOVE_OR_EQUAL:  # >=

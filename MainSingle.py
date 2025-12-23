@@ -35,7 +35,7 @@ logging.basicConfig(
 if __name__ == "__main__":
     from RCardData import db_load
     from RChart import Chart, MusicDB
-    from RDeck import Deck
+    from RDeck import Deck, Card
     from RLiveStatus import PlayerAttributes
     from SkillResolver import UseCardSkill, ApplyCenterSkillEffect, ApplyCenterAttribute, CheckCenterSkillCondition
     from CardLevelConfig import convert_deck_to_simulator_format, fix_windows_console_encoding, DEATH_NOTE
@@ -63,20 +63,24 @@ if __name__ == "__main__":
     """
     # 使用convert_deck_to_simulator_format时可只输入id列表
     # 此时需要在CardLevelConfig中自定义练度，未定义则默认全满级
-
+    
     d = Deck(
         db_carddata, db_skill,
         convert_deck_to_simulator_format(
-            [1041513, 1021701, 1021523, 1022701, 1043516, 1043802]
+            [1041513, 1033531, 1033530, 1022702, 1023702, 1031533]
         )
     )
     centercard_id = []
     # 指定一张C位卡牌，未指定则按默认规则选取
     # 默认规则: 右侧DR > 左侧DR > 左侧非DR
-
+    
+    friendcard = ()
+    # 指定一张助战卡，未指定则无
+    # 示例: friendcard =  (1031519, [140, 14, 14])
+    
     # 歌曲、难度设置
     # 难度 01 / 02 / 03 / 04 对应 Normal / Hard / Expert / Master
-    fixed_music_id = "405105"  # Very! Very! COCO夏っ
+    fixed_music_id = "405126"  # Very! Very! COCO夏っ
     fixed_difficulty = "02"
     fixed_player_master_level = 50
 
@@ -92,6 +96,11 @@ if __name__ == "__main__":
         c.music.CenterCharacterId = center_override
     if color_override:
         c.music.MusicType = color_override
+
+    centerfriend = False
+    if friendcard:
+        d.friend = Card(db_carddata, db_skill, *friendcard)
+        centerfriend = d.friend.characters_id == c.music.CenterCharacterId
 
     logging.info("--- 卡组信息 ---")
     for card in d.cards:
@@ -148,7 +157,7 @@ if __name__ == "__main__":
     logging.info(f"\n--- 开始模拟: {c.music.Title} ({fixed_difficulty})  ---")
     i = 0
     combo_count = 0
-    cardnow = d.topcard()
+    cardnow = d.topcard
     while i < len(c.ChartEvents):
         timestamp, event = c.ChartEvents[i]
         i += 1
@@ -159,7 +168,7 @@ if __name__ == "__main__":
                     player.combo_add("GOOD")
                     # player.combo_add("BAD", event)
 
-                elif afk_mental and player.mental.get_rate() > afk_mental:
+                elif afk_mental and player.mental.rate > afk_mental:
                     # 不同note类型和判定会影响扣血多少
                     # 模拟开局挂机到背水时需向combo_add()传入note类型(即event)
                     # 卡组有p吟/BR吟时自动模拟背水，可在DEATH_NOTE中添加其他背水血线
@@ -189,7 +198,7 @@ if __name__ == "__main__":
                     cdtime = str(float(timestamp) + player.cooldown)
                     c.ChartEvents.append((cdtime, "CDavailable"))
                     c.ChartEvents.sort(key=lambda event: float(event[0]))
-                    cardnow = d.topcard()
+                    cardnow = d.topcard
 
             case "CDavailable":
                 player.CDavailable = True
@@ -203,10 +212,10 @@ if __name__ == "__main__":
                     cdtime = str(float(timestamp) + player.cooldown)
                     c.ChartEvents.append((cdtime, "CDavailable"))
                     c.ChartEvents.sort(key=lambda event: float(event[0]))
-                    cardnow = d.topcard()
+                    cardnow = d.topcard
 
             case event if event[0] == "_":
-                if player.mental.get_rate() > afk_mental:
+                if player.mental.rate > afk_mental:
                     player.combo_add("MISS", event[1:])
                     logger.timing(f"[连击{player.combo}x]\t总分: {player.score}\t时间: {timestamp}\tMISS: {event[1:]}\t{player.mental}")
                 else:
@@ -220,6 +229,11 @@ if __name__ == "__main__":
                 if centercard != None:
                     logger.debug(f"\n尝试应用C位技能: {centercard.full_name}")
                     for condition, effect in centercard.get_center_skill():
+                        if CheckCenterSkillCondition(player, condition, centercard, event):
+                            ApplyCenterSkillEffect(player, effect)
+                if centerfriend:
+                    logger.debug(f"\n尝试应用C位技能: {d.friend.full_name}")
+                    for condition, effect in d.friend.get_center_skill():
                         if CheckCenterSkillCondition(player, condition, centercard, event):
                             ApplyCenterSkillEffect(player, effect)
                 if event == "LiveEnd":

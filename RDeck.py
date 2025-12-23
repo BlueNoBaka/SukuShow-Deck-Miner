@@ -159,8 +159,10 @@ class Deck():
     def __init__(self, db_card, db_skill, card_info: list) -> None:
         self.cards: list[Card] = []
         self.queue: list[Card] = []
+        self.friend: Card = None
         self.appeal: int = 0
         self.card_log: list[str] = []
+        self.topcard: Card
         for card in card_info:
             self.cards.append(Card(db_card, db_skill, card[0], card[1]))
         self.reset()
@@ -170,22 +172,37 @@ class Deck():
         if not self.queue:
             self.queue.append(None)
             # 卡组全部除外时特殊处理
-
-    def topcard(self):
-        if len(self.queue) == 0:
-            self.reset()
-        return self.queue[0]
+        self.topcard = self.queue[0]
+    
+    def exceptcard(self, card: Card):
+        card.is_except = True
+        # 模拟器只在重置牌库时检查除外标记
+        # 对于LR梢这种先重置牌库再标记除外的卡，就会导致已被除外的LR梢多在牌库里出现一次
+        # 因此在触发除外时额外检查牌库中是否有刚被除外的卡，避免未被除外
+        for index, deckcard in enumerate(self.queue):
+            if deckcard.is_except:
+                self.queue.pop(index)
+                if not self.queue:
+                    self.reset()
+                break
+        
 
     def topskill(self):
+        self.card_log.append(self.topcard.full_name)
+        result = self.queue.pop(0).get_skill()
         if len(self.queue) == 0:
             self.reset()
-        self.card_log.append(self.topcard().full_name)
-        return self.queue.pop(0).get_skill()
+        self.topcard = self.queue[0]
+        return result
 
     def appeal_calc(self, music_type):
         result = 0
         for card in self.cards:
             appeals = [card.smile, card.pure, card.cool]
+            appeals[music_type - 1] *= 10
+            result += sum(appeals)
+        if self.friend:
+            appeals = [self.friend.smile, self.friend.pure, self.friend.cool]
             appeals[music_type - 1] *= 10
             result += sum(appeals)
         result = ceil(result / 10)
@@ -196,6 +213,8 @@ class Deck():
         result = 0
         for card in self.cards:
             result += card.mental
+        if self.friend:
+            result += self.friend.mental
         return result
 
     def used_all_skill_calc(self):

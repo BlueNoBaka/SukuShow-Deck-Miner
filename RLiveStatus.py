@@ -135,6 +135,7 @@ class Mental:
     def __init__(self) -> None:
         self.current_hp: int = 100
         self.max_hp: int = 100
+        self.rate: float = 100.0
         self.badMinus: int = 30
         self.missMinus: int = 50
         self.traceMinus: int = 20
@@ -158,20 +159,19 @@ class Mental:
             case _:
                 pass
         if self.current_hp:
+            self.rate = self.current_hp * 100 / self.max_hp
             return
         raise MentalDown()
 
     def skill_add(self, value):
         self.current_hp = max(1, self.current_hp + ceil(self.max_hp * value / 100))
-
-    def get_rate(self):
-        return self.current_hp * 100.0 / self.max_hp
+        self.rate = self.current_hp * 100 / self.max_hp
 
     def __str__(self):
         """
         Mental 对象的字符串表示。
         """
-        return f"Mental: {self.current_hp} / {self.max_hp} ({self.get_rate():.2f}%)"
+        return f"Mental: {self.current_hp} / {self.max_hp} ({self.rate:.2f}%)"
 
 
 class PlayerAttributes:

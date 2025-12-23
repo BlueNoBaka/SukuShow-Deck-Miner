@@ -18,13 +18,13 @@ logging.basicConfig(
 # 求解前需运行 MainBatch.py 生成对应的卡组得分记录
 CHALLENGE_SONGS = [
     # 若只输入两首歌则会寻找仅针对两面的最优解，不考虑第三面
-    ("405106", "02"),  # My Lucky Clover
-    ("405127", "02"),  # Hip, hip, hooray!
-    ("105103", "02"),  # チリコンカン
+    ("405128", "02"),  # 令嬢モブ！
+    ("405126", "02"),  # チャーミングな花束を！
+    ("405120", "02"),  # ガランドFlash
 ]
 
 # 每首歌只保留得分排名前 N 名的卡组用于求解
-TOP_N = 50000
+TOP_N = 20000
 
 # 在控制台与文件输出中显示卡牌名称
 SHOWNAME = True
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     # === 建立卡牌ID到bit位的映射 ===
     card_to_bit = {cid: i for i, cid in enumerate(sorted(all_cards))}
     logger.info(f"Loaded {len(card_to_bit)} unique cards")
-    assert len(card_to_bit) <= 64, "卡牌种类超过64张时需使用更复杂的bitarray方案"
+    #assert len(card_to_bit) <= 64, "卡牌种类超过64张时需使用更复杂的bitarray方案"
     assert len(card_to_bit) >= 6 * len(CHALLENGE_SONGS), "可用卡牌过少，必定出现重复卡牌"
 
     # === 转换deck为bitmask ===
