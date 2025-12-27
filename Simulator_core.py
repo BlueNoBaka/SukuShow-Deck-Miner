@@ -4,7 +4,7 @@ import heapq
 # 导入所有 R 模块和 db_load 函数
 from RCardData import db_load
 from RChart import Chart, MusicDB
-from RDeck import Deck
+from RDeck import Deck, Card
 from RLiveStatus import PlayerAttributes, MentalDown
 from SkillResolver import UseCardSkill, ApplyCenterSkillEffect, ApplyCenterAttribute, CheckCenterSkillCondition
 from CardLevelConfig import DEATH_NOTE
@@ -60,12 +60,17 @@ def run_game_simulation(
     """
     # NOTE: DBs (MUSIC_DB, DB_CARDDATA, DB_SKILL) are now global to this module
     # and inherited by child processes (copy-on-write).
-    deck_card_data, chart_obj, player_master_level, original_deck_index, deck_card_ids, centercard_id = task_args
+    deck_card_data, chart_obj, player_master_level, original_deck_index, deck_card_ids, centercard_id, friendcard_id = task_args
 
     d = Deck(DB_CARDDATA, DB_SKILL, deck_card_data)
     c: Chart = chart_obj
     player = PlayerAttributes(masterlv=player_master_level)
     player.set_deck(d)
+
+    centerfriend = False
+    if friendcard_id:
+        d.friend = Card.get_friend(DB_CARDDATA, DB_SKILL, friendcard_id)
+        centerfriend = d.friend.characters_id == c.music.CenterCharacterId
 
     centercard = None
     afk_mental = 0
@@ -154,7 +159,11 @@ def run_game_simulation(
                     player.voltage.set_fever(True)
                 if centercard:
                     for condition, effect in centercard.get_center_skill():
-                        if CheckCenterSkillCondition(player, condition, centercard, event):
+                        if CheckCenterSkillCondition(player, condition, event):
+                            ApplyCenterSkillEffect(player, effect)
+                if centerfriend:
+                    for condition, effect in centercard.get_center_skill():
+                        if CheckCenterSkillCondition(player, condition, event):
                             ApplyCenterSkillEffect(player, effect)
                 if event == "LiveEnd":
                     break
@@ -169,5 +178,6 @@ def run_game_simulation(
         "cards_played_log": d.card_log,
         "original_deck_index": original_deck_index,
         "deck_card_ids": deck_card_ids,
-        "center_card": int(centercard.card_id)
+        "center_card": centercard_id,
+        "friend_card": friendcard_id
     }

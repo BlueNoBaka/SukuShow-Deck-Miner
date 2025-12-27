@@ -76,19 +76,9 @@ def _get_evolution(rarity: Rarity, lv: int) -> int:
     return stages[-1][1]
 
 
-def cardobj_cache(cls):
-    cache: dict[int, Card] = {}
-
-    def wrapper(*args, **kwargs):
-        key = args[2]  # 仅检查卡牌id
-        if key not in cache:
-            cache[key] = cls(*args, **kwargs)
-        return copy(cache[key])
-    return wrapper
-
-
-@cardobj_cache
 class Card():
+    _cardobj_cache = {}
+    _friend_cache = {}
     def __init__(self, db_card, db_skill, series_id, lv_list=None):
         if lv_list == None:
             lv_list = [140, 14, 14]
@@ -109,6 +99,26 @@ class Card():
         self.cost: int = self.skill_unit.cost
         self.active_count: int = 0
         self.is_except: bool = False
+
+    @classmethod
+    def get_instance(cls, db_card, db_skill, series_id, lv_list = None):
+        key = series_id
+        if key not in cls._cardobj_cache:
+            # 只有第一次会执行繁琐的数据库查找和计算
+            cls._cardobj_cache[key] = cls(db_card, db_skill, series_id, lv_list)
+        
+        # 使用 copy 或 deepcopy 取决于 Skill 类是否是可变的
+        return copy(cls._cardobj_cache[key])
+    
+    @classmethod
+    def get_friend(cls, db_card, db_skill, series_id, lv_list = None):
+        key = series_id
+        if key not in cls._friend_cache:
+            # 只有第一次会执行繁琐的数据库查找和计算
+            cls._friend_cache[key] = cls(db_card, db_skill, series_id, lv_list)
+        
+        # 使用 copy 或 deepcopy 取决于 Skill 类是否是可变的
+        return copy(cls._friend_cache[key])
 
     def __copy__(self):
         cls = self.__class__
@@ -164,7 +174,7 @@ class Deck():
         self.card_log: list[str] = []
         self.topcard: Card
         for card in card_info:
-            self.cards.append(Card(db_card, db_skill, card[0], card[1]))
+            self.cards.append(Card.get_instance(db_card, db_skill, card[0], card[1]))
         self.reset()
 
     def reset(self):

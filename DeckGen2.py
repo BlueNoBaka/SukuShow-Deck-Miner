@@ -104,12 +104,13 @@ def load_simulated_decks(path: str):
 
 
 class DeckGeneratorWithDoubleCards:
-    def __init__(self, cardpool: list[int], mustcards: list[list[int]], center_char=None, center_card: set[int] = None, log_path: str = None):
+    def __init__(self, cardpool: list[int], mustcards: list[list[int]], center_char=None, center_card: set[int] = None, friend_card: set[int] = None, log_path: str = None):
         self.cardpool = cardpool
         self.center_char = center_char
         self.char_id_to_cards = defaultdict(list)
         self.center_card = center_card
         self.mustcards = mustcards
+        self.friend_card = friend_card
         self.simulated_decks = load_simulated_decks(log_path)
         for card_id in self.cardpool:
             char_id = card_id // 1000
@@ -172,6 +173,10 @@ class DeckGeneratorWithDoubleCards:
                 else:
                     # 仅在未指定C位角色卡牌时生成不含C位角色的卡组
                     available_center = {None}
+                if self.friend_card:
+                    available_friend = self.friend_card.difference(deck)
+                else:
+                    available_friend = {None}
 
                 for perm in itertools.permutations(deck):
                 # 去除分位于左一、洗牌位于最后一张的卡组
@@ -179,7 +184,8 @@ class DeckGeneratorWithDoubleCards:
                             SkillEffectType.DeckReset in DB_TAG[perm[-1]]:
                         continue
                     for center in available_center:
-                        yield perm, center
+                        for friend in available_friend:
+                            yield perm, center, friend
 
     def _count_decks_for_distribution(self, char_distribution):
         char_counts = {char_id: char_distribution.count(char_id) for char_id in set(char_distribution)}
@@ -210,12 +216,16 @@ class DeckGeneratorWithDoubleCards:
                 continue
             if self.check_skill_tags(count_skill_tags(deck)):
                 available_center = self.center_card.intersection(deck)
+                available_friend = self.friend_card.difference(deck)
                 if available_center or not self.center_card:
+                    center_count = len(available_center) or 1
+                    friend_count = len(available_friend) or 1
+                    variety_count = center_count * friend_count
                     for perm in itertools.permutations(deck):
                         if SkillEffectType.ScoreGain in DB_TAG[perm[0]] or \
                                 SkillEffectType.DeckReset in DB_TAG[perm[-1]]:
                             continue
-                        total += len(available_center) or 1
+                        total += variety_count
         return total
 
     def compute_total_count(self):
@@ -229,11 +239,11 @@ class DeckGeneratorWithDoubleCards:
         return total
 
 
-def generate_decks_with_double_cards(cardpool: list[int], mustcards: list[list[int]], center_char: int = None, center_card: set[int] = None, log_path: str = None):
+def generate_decks_with_double_cards(cardpool: list[int], mustcards: list[list[int]], center_char: int = None, center_card: set[int] = None, friend_card: set[int] = None, log_path: str = None):
     """
     外部接口函数，返回支持双卡规则的卡组生成器
     """
-    return DeckGeneratorWithDoubleCards(cardpool, mustcards, center_char, center_card, log_path)
+    return DeckGeneratorWithDoubleCards(cardpool, mustcards, center_char, center_card, friend_card, log_path)
 
 
 if __name__ == "__main__":

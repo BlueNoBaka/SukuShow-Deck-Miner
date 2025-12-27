@@ -588,15 +588,13 @@ class CenterSkillConditionType(Enum):
     # 123可单独出现，4暂未出现，567只与3绑定出现
 
 
-def CheckCenterSkillCondition(player_attrs: PlayerAttributes, condition_id: str, card: Card, event: str = None) -> bool:
+def CheckCenterSkillCondition(player_attrs: PlayerAttributes, condition_id: str, event: str = None) -> bool:
     """
     根据ID检查给定条件是否满足。
 
     Args:
         player_attrs (PlayerAttributes): 玩家属性实例。
         condition_id (int): C位技能条件ID。
-        card_id_to_check (int): 如果条件是 UsedSkillCount，指定要检查的卡牌ID。
-                                默认为 1001 (用于模拟)。
 
     Returns:
         bool: 如果条件满足则返回 True，否则返回 False。

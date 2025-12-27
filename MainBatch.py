@@ -99,9 +99,9 @@ def task_generator_func(decks_generator, chart, player_level):
     一个生成器函数，从 decks_generator 获取每个卡组，
     并将其转换为 run_game_simulation 所需的任务格式。
     """
-    for i, (deck_card_ids_list, center_card) in enumerate(decks_generator):  # Simulate all decks as example
+    for i, (deck_card_ids_list, center_card, friend_card) in enumerate(decks_generator):  # Simulate all decks as example
         sim_deck_format = convert_deck_to_simulator_format(deck_card_ids_list)
-        yield (sim_deck_format, chart, player_level, i, deck_card_ids_list, center_card)
+        yield (sim_deck_format, chart, player_level, i, deck_card_ids_list, center_card, friend_card)
 
 
 #  --- Main Execution Block for Parallel Simulation ---
@@ -146,22 +146,6 @@ if __name__ == "__main__":
         1052506, 1052508, 1052901, #1052503, 
         #1052801, # 1052504  # 塞: 片翼 音击 BR 十六夜 OE 天地黎明
     ]
-    card_ids_22 = [
-        1011501,  # 沙知
-        1021523, #1021901, 
-        1021512, 1021701,  # 梢: 银河 BR 舞会 LR
-        #1022521, 
-        1022701, #1022901, 1022504,  # 缀: 银河 LR BR 明月
-        1023520, 1023701, 1023901,  # 慈: 银河 LR BR
-        1031519, 1031901,  # 帆: 舞会 BR(2024)
-        1032518, #1032901,  # 沙: 舞会 BR
-        1033514, 1033525, 1033901,  # 乃: 舞会 COCO夏 BR
-        1041513,  # 吟: 舞会
-        1042516, # 1042801, 1042802, # 1042515, # 1042512,  # 铃: 太阳 EA OE 暧昧mayday 舞会
-        1043515, 1043516, 1043801, 1043802,  # 芽: BLAST COCO夏 EA OE 舞会1043512
-        1051503, #1051501, 1051502,  # 泉: 天地黎明 DB RF
-        1052901, 1052503,  # 1052504  # 塞: BR 十六夜 天地黎明
-    ]
 
     # --- 配置卡组限制条件 ---
 
@@ -172,9 +156,13 @@ if __name__ == "__main__":
     # 将以下卡牌移出备选池
     exclude = []
     # 卡组包含DR或LR时，仍可以作为C位的非DR/LR卡牌
-    secondary_center = [1031533, 1032530, 1033528]
     # 若备选池中无DR，并且未指定其他卡牌作为C位卡牌，则会模拟所有可能的C位
+    secondary_center = [1031533, 1032530, 1033528]
+    # 好友位的助战卡牌
+    # 仅在无可用助战卡时模拟无助战的情况
+    friend_card = []
     # 以上填写格式均为: [卡牌id1, 卡牌id2, ...]
+
 
     # 卡组必须包含以下所有技能类型
     mustskills_all = [
@@ -242,6 +230,10 @@ if __name__ == "__main__":
         logger.info(f"Available center ({len(available_center)}): {available_center}")
     else:
         logger.info(f"Missing available center card")
+    if friend_card:
+        logger.info(f"Available friend ({len(friend_card)}): {set(friend_card)}")
+    else:
+        logger.info(f"Missing available friend card")
 
     logger.info(f"Pre-calculating deck amount from {len(card_ids)} cards...")
 
@@ -251,6 +243,7 @@ if __name__ == "__main__":
         mustcards=[mustcards_all, mustcards_any, mustskills_all],
         center_char=center_char_id,  # 未指定center_char时会生成不含C位角色的卡组
         center_card=available_center,
+        friend_card=set(friend_card),
         log_path=os.path.join("log", f"simulation_results_{fixed_music_id}_{fixed_difficulty}.json"),
     )
     total_decks_to_simulate = decks_generator.total_decks
@@ -291,11 +284,13 @@ if __name__ == "__main__":
                 current_log = result["cards_played_log"]
                 deck_card_ids = result['deck_card_ids']
                 center_card = result['center_card']
+                friend_card = result['friend_card']
 
                 # 记录当前卡组的得分、卡牌、C位卡牌，添加到结果列表中
                 current_batch_results.append({
                     "deck_card_ids": deck_card_ids,  # 使用卡牌ID列表
                     "center_card": center_card,
+                    "friend_card": friend_card,
                     "score": current_score,
                 })
                 results_processed_count += 1
@@ -306,12 +301,13 @@ if __name__ == "__main__":
                         "original_index": original_index,
                         "deck_card_ids": deck_card_ids,
                         "center_card": center_card,
+                        "friend_card": friend_card,
                         "score": current_score
                     }
                     best_log = current_log
                     logger.info(f"NEW HI-SCORE! Deck: {original_index}, Score: {current_score:,}")
                     logger.info(f"  Cards: {deck_card_ids}")
-                    logger.info(f"  Center: {center_card}")
+                    logger.info(f"  Center: {center_card}   Friend: {friend_card}")
 
                 if len(current_batch_results) >= BATCH_SIZE:
                     batch_counter += 1

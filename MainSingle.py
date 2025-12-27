@@ -75,7 +75,8 @@ if __name__ == "__main__":
     # 默认规则: 右侧DR > 左侧DR > 左侧非DR
     
     friendcard = ()
-    # 指定一张助战卡，未指定则无
+    # 指定一张助战卡 (需要同时指定练度)
+    # 留空则无助战卡
     # 示例: friendcard =  (1031519, [140, 14, 14])
     
     # 歌曲、难度设置
@@ -229,12 +230,12 @@ if __name__ == "__main__":
                 if centercard != None:
                     logger.debug(f"\n尝试应用C位技能: {centercard.full_name}")
                     for condition, effect in centercard.get_center_skill():
-                        if CheckCenterSkillCondition(player, condition, centercard, event):
+                        if CheckCenterSkillCondition(player, condition, event):
                             ApplyCenterSkillEffect(player, effect)
                 if centerfriend:
                     logger.debug(f"\n尝试应用C位技能: {d.friend.full_name}")
                     for condition, effect in d.friend.get_center_skill():
-                        if CheckCenterSkillCondition(player, condition, centercard, event):
+                        if CheckCenterSkillCondition(player, condition, event):
                             ApplyCenterSkillEffect(player, effect)
                 if event == "LiveEnd":
                     break
