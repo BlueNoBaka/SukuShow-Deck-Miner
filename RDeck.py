@@ -194,6 +194,8 @@ class Deck():
                 self.queue.pop(index)
                 if not self.queue:
                     self.reset()
+                else:
+                    self.topcard = self.queue[0]
                 break
         
 
