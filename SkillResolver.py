@@ -159,7 +159,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
                     card.smile *= (1 + change_amount)
             friend = player_attrs.deck.friend
             if friend:
-                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
+                if CheckMultiTarget(target_ids=target, char_id=friend.characters_id):
                     friend.smile *= (1 + change_amount)
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
@@ -172,7 +172,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
                     card.pure *= (1 + change_amount)
             friend = player_attrs.deck.friend
             if friend:
-                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
+                if CheckMultiTarget(target_ids=target, char_id=friend.characters_id):
                     friend.pure *= (1 + change_amount)
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
@@ -185,7 +185,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
                     card.cool *= (1 + change_amount)
             friend = player_attrs.deck.friend
             if friend:
-                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
+                if CheckMultiTarget(target_ids=target, char_id=friend.characters_id):
                     friend.cool *= (1 + change_amount)
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
@@ -225,7 +225,7 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
                     card.mental = ceil(card.mental * (1 + change_amount * change_sign))
             friend = player_attrs.deck.friend
             if friend:
-                if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
+                if CheckMultiTarget(target_ids=target, char_id=friend.characters_id):
                     friend.mental = ceil(friend.mental * (1 + change_amount * change_sign))
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
