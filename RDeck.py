@@ -168,7 +168,7 @@ class Card():
 class Deck():
     def __init__(self, db_card, db_skill, card_info: list) -> None:
         self.cards: list[Card] = []
-        self.queue: list[Card] = []
+        self._current_idx: int = -1;
         self.friend: Card = None
         self.appeal: int = 0
         self.card_log: list[str] = []
@@ -176,35 +176,37 @@ class Deck():
         for card in card_info:
             self.cards.append(Card.get_instance(db_card, db_skill, card[0], card[1]))
         self.reset()
+    
+    def move_next(self):
+        start = self._current_idx
+        idx = start
+        while(True):
+            idx = (idx + 1) % 6
+            if idx == start:
+                if self.cards[start].is_except:
+                    self.topcard = None
+                    self._current_idx = idx
+                    return
+                break
+            if not self.cards[idx].is_except:
+                break
+        self._current_idx = idx
+        self.topcard = self.cards[idx]
 
     def reset(self):
-        self.queue = [card for card in self.cards if not card.is_except]
-        if not self.queue:
-            self.queue.append(None)
-            # 卡组全部除外时特殊处理
-        self.topcard = self.queue[0]
+        self._current_idx = -1
+        self.move_next()
     
     def exceptcard(self, card: Card):
         card.is_except = True
-        # 模拟器只在重置牌库时检查除外标记
-        # 对于LR梢这种先重置牌库再标记除外的卡，就会导致已被除外的LR梢多在牌库里出现一次
-        # 因此在触发除外时额外检查牌库中是否有刚被除外的卡，避免未被除外
-        for index, deckcard in enumerate(self.queue):
-            if deckcard.is_except:
-                self.queue.pop(index)
-                if not self.queue:
-                    self.reset()
-                else:
-                    self.topcard = self.queue[0]
-                break
+        if card == self.topcard:
+            self.move_next()
         
-
     def topskill(self):
-        self.card_log.append(self.topcard.full_name)
-        result = self.queue.pop(0).get_skill()
-        if len(self.queue) == 0:
-            self.reset()
-        self.topcard = self.queue[0]
+        current_card = self.topcard
+        self.card_log.append(current_card.full_name)
+        result = current_card.get_skill()
+        self.move_next()
         return result
 
     def appeal_calc(self, music_type):
