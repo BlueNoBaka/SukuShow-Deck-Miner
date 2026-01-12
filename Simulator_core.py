@@ -162,7 +162,7 @@ def run_game_simulation(
                         if CheckCenterSkillCondition(player, condition, event):
                             ApplyCenterSkillEffect(player, effect)
                 if centerfriend:
-                    for condition, effect in centercard.get_center_skill():
+                    for condition, effect in d.friend.get_center_skill():
                         if CheckCenterSkillCondition(player, condition, event):
                             ApplyCenterSkillEffect(player, effect)
                 if event == "LiveEnd":
