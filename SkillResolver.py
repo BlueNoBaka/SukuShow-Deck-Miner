@@ -235,6 +235,10 @@ def ApplyCenterAttribute(player_attrs: PlayerAttributes, effect_id: int, target:
             for card in player_attrs.deck.cards:
                 if CheckMultiTarget(target_ids=target, char_id=card.characters_id):
                     card.mental += value_data * change_sign
+            friend = player_attrs.deck.friend
+            if friend:
+                if CheckMultiTarget(target_ids=target, char_id=friend.characters_id):
+                    friend.mental += value_data * change_sign
             if flag_debug:
                 action = "增加" if change_direction == 0 else "减少"
                 logger.debug(f"  对满足要求的目标应用效果: 血量 {action} {value_data}")
