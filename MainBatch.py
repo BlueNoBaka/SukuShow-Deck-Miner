@@ -61,6 +61,7 @@ def save_simulation_results(results_data: list, filename: str = os.path.join("lo
         current_deck_card_ids = result['deck_card_ids']
         current_score = result['score']
         center_card = result['center_card']
+        friend_card = result['friend_card']
 
         # Create a standardized key for comparison (sorted tuple of card IDs)
         # Ensure card IDs are integers for consistent sorting if they are not already
@@ -72,6 +73,7 @@ def save_simulation_results(results_data: list, filename: str = os.path.join("lo
             unique_decks_best_scores[sorted_card_ids_tuple] = {
                 'deck_card_ids': current_deck_card_ids,
                 'center_card': center_card,
+                'friend_card': friend_card,
                 'score': current_score,
             }
 
@@ -157,7 +159,7 @@ if __name__ == "__main__":
     exclude = []
     # 卡组包含DR或LR时，仍可以作为C位的非DR/LR卡牌
     # 若备选池中无DR，并且未指定其他卡牌作为C位卡牌，则会模拟所有可能的C位
-    secondary_center = [1031533, 1032530, 1033528]
+    secondary_center = [1031533, 1032530, 1033528, 1051511, 1052511]
     # 好友位的助战卡牌
     # 仅在无可用助战卡时模拟无助战的情况
     friend_card = []
@@ -177,7 +179,7 @@ if __name__ == "__main__":
     ]
 
     # --- Step 2: Prepare simulation tasks ---
-    fixed_music_id = "105101"  # My Lucky Clover
+    fixed_music_id = "405134"  # JOKER.
     fixed_difficulty = "02"
     fixed_player_master_level = 50
 
@@ -344,7 +346,7 @@ if __name__ == "__main__":
     logger.info(f"Total simulations run: {results_processed_count}")
     if best_score != -1:
         logger.info(f"Best Score: {best_score:,}")
-        logger.info(f"Best Deck: {best_deck_info['original_index']}\t Center: {best_deck_info['center_card']}")
+        logger.info(f"Best Deck: {best_deck_info['original_index']}\t Center: {best_deck_info['center_card']}\t Friend: {best_deck_info['friend_card']}")
         logger.info(f"Cards: {best_deck_info['deck_card_ids']}")
         best_log_str = [" | ".join(best_log[i:i + 3])
                         for i in range(0, len(best_log), 3)]
