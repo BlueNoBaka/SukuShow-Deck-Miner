@@ -216,7 +216,10 @@ class DeckGeneratorWithDoubleCards:
                 continue
             if self.check_skill_tags(count_skill_tags(deck)):
                 available_center = self.center_card.intersection(deck)
-                available_friend = self.friend_card.difference(deck)
+                if self.friend_card:
+                    available_friend = self.friend_card.difference(deck)
+                else:
+                    available_friend = {None}
                 if available_center or not self.center_card:
                     center_count = len(available_center) or 1
                     friend_count = len(available_friend) or 1
